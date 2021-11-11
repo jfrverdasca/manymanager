@@ -1,0 +1,124 @@
+<div class="card shadow-lg">
+    <div class="card-header">
+        <div class="row justify-content-between">
+            <div class="col-10">
+                <h3>Create expense</h3>
+            </div>
+            <div class="col-2 text-end">
+                <button type="button" class="btn-close p-2" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+    <form class="needs-validation" method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <div class="card-body">
+            <div class="row justify-content-start align-items-center">
+                <div class="col-3">
+                    {{ form.description.label }}:
+                </div>
+                <div class="col-6">
+                    {% if form.description.errors %}
+                        {{ form.description(class="form-control is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.description.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.description(class="form-control") }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row justify-content-start align-items-center mt-1">
+                <div class="col-3">
+                    {{ form.category.label }}:
+                </div>
+                <div class="col-6">
+                    <div class="dropdown">
+                        <button id="expense_category_dropdown" class="dropdown-toggle btn btn-primary" type="button" data-bs-toggle="dropdown" aria-expanded="false">Select</button>
+                        <ul class="dropdown-menu" aria-labelledby="expense_category_dropdown">
+                            {% for choice in form.category.choices %}
+                                <li>
+                                    <button class="colored-dropdown-item" style="--bg-color: {{ choice.color }}; --color: #fff" type="button" value="{{ choice.id }}">{{ choice.name }}</button>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                        {% if form.category.errors %}
+                            <input id="{{ form.category.id }}" name="{{ form.category.name }}" class="is-invalid" type="hidden">
+                            <div class="invalid-feedback">
+                                {% for error in form.category.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <input id="{{ form.category.id }}" name="{{ form.category.name }}" type="hidden" value="{{ form.category.data }}">
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="row justify-content-start align-items-center mt-1">
+                <div class="col-3">
+                    {{ form.date.label }}:
+                </div>
+                <div class="col-6">
+                    {% if form.date.errors %}
+                        {{ form.date(class="form-control is-invalid", readonly=true) }}
+                        <div class="invalid-feedback">
+                            {% for error in form.date.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.date(class="form-control", readonly=true) }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row justify-content-start align-items-center mt-1">
+                <div class="col-3">
+                    {{ form.time.label }}:
+                </div>
+                <div class="col-6">
+                    {% if form.time.errors %}
+                        {{ form.time(class="form-control is-invalid", type="text") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.time.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.time(class="form-control", type="text") }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row justify-content-start align-items-center mt-1">
+                <div class="col-3">
+                    {{ form.value.label }}:
+                </div>
+                <div class="col-6">
+                    {% if form.value.errors %}
+                        {{ form.value(class="form-control is-invalid", type="number") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.value.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.value(class="form-control", type="number") }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row justify-content-start align-items-center mt-2">
+                <div class="col-3">
+                    {{ form.is_favorite.label }}:
+                </div>
+                <div class="col-6">
+                    {{ form.is_favorite(class="form-check-input") }}
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            {{ form.submit(class="btn btn-primary") }}
+            <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Cancel</button>
+        </div>
+    </form>
+</div>

@@ -1,0 +1,85 @@
+{% extends 'base/base.html' %}
+{% block content %}
+    <div class="row justify-content-center mt-5">
+        <div class="col-auto">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h3>Login</h3>
+                </div>
+                <form method="post" novalidate>
+                    {{ form.hidden_tag() }}
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-lg-4">
+                                {{ form.email.label }}:
+                            </div>
+                            <div class="col-lg-8">
+                                {% if form.email.errors %}
+                                    {{ form.email(class="form-control is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.email.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.email(class="form-control") }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="row align-items-center mt-1">
+                            <div class="col-lg-4">
+                                {{ form.password.label }}:
+                            </div>
+                            <div class="col-lg-8">
+                                {% if form.password.errors %}
+                                    {{ form.password(class="form-control is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.password.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.password(class="form-control") }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="row align-items-center mt-1">
+                            <div class="col-sm-4">
+                                <small class="text-secondary">{{ form.remember.label }}:</small>
+                            </div>
+                            <div class="col-sm-8">
+                                <small>{{ form.remember(class="form-check-input align-text-bottom") }}</small>
+                            </div>
+                        </div>
+                        <!--<div class="row align-items-center mt-3">
+                            <div class="container">
+                            {% with messages = get_flashed_messages(with_categories=True) %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ category }} text-center py-2 m-0" role="alert">
+                                    {{ message }}
+                                    </div>
+                                {% endfor %}
+                            {% endwith %}
+                            </div>
+                        </div>-->
+                    </div>
+                    <div class="card-footer">
+                        <div class="row justify-content-between">
+                            <div class="col-auto">
+                                {{ form.submit(class="btn btn-sm btn-primary") }}
+                            </div>
+                            <div class="col-auto">
+                                <small><a class="text-secondary align-middle" href="{{ url_for('auth.request_password_reset') }}">Reset password</a></small>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="row justify-content-center mt-3 mb-5">
+        <div class="col-4 text-center">
+            <small>Don't have an account yet? <a href="{{ url_for('auth.register') }}">Register</a></small>
+        </div>
+    </div>
+{% endblock %}

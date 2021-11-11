@@ -1,0 +1,55 @@
+<table id="categories_balance_table" class="table w-100">
+    <thead>
+        <tr>
+            <td>Category</td>
+            <td>Limit</td>
+            <td>Balance</td>
+            <td>Spent</td>
+        </tr>
+    </thead>
+    <tbody>
+    {% for row in data.categories %}
+        <tr>
+            <td style="color: {{ row.category_obj.color }};">{{ row.category_obj.name }}</td>
+            <td>{{ row.category_obj.limit }}</td>
+            {% if row.balance < 0 %}
+                <td class="text-danger">{{ row.balance }}</td>
+            {% else %}
+                <td class="text-primary">{{ row.balance }}</td>
+            {% endif %}
+            <td class="text-danger">{{ row.spent }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<table id="expenses_table" class="table w-100">
+    <thead>
+        <tr>
+            <td>Description</td>
+            <td>Category</td>
+            <td>Date</td>
+            <td>Value</td>
+            <td>Options</td>
+        </tr>
+    </thead>
+    <tbody>
+    {% for row in data.expenses %}
+        <tr>
+            <td>{{ row.description }}</td>
+            <td style="color: {{ row.category.color }};">{{ row.category.name }}</td>
+            <td>{{ row.timestamp | formatdatetime }}</td>
+            <td>{{ row.value }}</td>
+            <td>
+                <!-- buttons bellow work with home expense modal javascript -->
+                <button name="edit" class="btn btn-sm text-primary text-decoration-none shadow-none p-0" value="{{ row.id }}">
+                    <i class="bi-pencil" style="font-size: 18px;"></i>
+                </button>
+                <button name="delete" class="btn btn-sm text-danger text-decoration-none shadow-none p-0 ms-2" value="{{ row.id }}">
+                    <i class="bi-trash" style="font-size: 18px;"></i>
+                </button>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>

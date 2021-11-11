@@ -1,0 +1,20 @@
+<ul id="favorites">
+    {% if favorites %}
+        {% for favorite in favorites %}
+        <li class="btn m-1" style="width: 6.5rem; color: #fff; background: {{ favorite.category.color }};" value="{{ favorite.id }}">
+            <div class="d-flex justify-content-center overflow-hidden text-nowrap">
+                <strong>{{ favorite.description }}</strong>
+            </div>
+            <div class="d-block">
+                <small>{{ favorite.category.name }}</small>
+            </div>
+            <div class="d-block">
+                <small><strong>{{ favorite.value }}</strong></small>
+            </div>
+        </li>
+        {% endfor %}
+    {% else %}
+    <p class="m-0">Add items to favorites to add expenses with one click. Select the <strong>"Show in favorites"</strong> option when adding a new expense</p>
+    <small>Note: Add items whose price is not variable</small>
+    {% endif %}
+</ul>

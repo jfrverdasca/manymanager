@@ -1,0 +1,353 @@
+{% extends 'base/base.html' %}
+{% block header %}
+    <!-- custom css -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    <script type="text/javascript" src="{{ url_for('static', filename='js/utilities.js') }}"></script>
+
+    <!-- jquery ui -->
+    <link href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet">
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+    <!-- jquery data table -->
+    <script src="https://cdn.datatables.net/1.11.0/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.0/js/dataTables.bootstrap5.min.js"></script>
+
+    <!-- charts -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+
+    <script>
+        $(document).ready(function () {
+            let expenses_categories_chart = new Chart($('#expenses_categories_chart'), {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    cutoutPercentage: 60,
+                    aspectRatio: 1.3,
+                    legend: {display: false}
+                }
+            });
+
+            function tablesUpdate() {
+                let fromDate = $('#from_date').val();
+                let toDate = $('#to_date').val();
+                let categoryId = $('#category').val();
+
+                $.get(`/home-tables/${fromDate}/${toDate}/${categoryId}`, function (response) {
+                    $('#expenses_table_area, #categories_balance_table_area').empty();
+                    $('#expenses_table_length_area, #expenses_table_pagination_area, #categories_balance_table_pagination_area').empty()
+
+                    let parsedResponse = $(response);
+                    parsedResponse.filter('#expenses_table').appendTo('#expenses_table_area');
+                    parsedResponse.filter('#categories_balance_table').appendTo('#categories_balance_table_area');
+
+                    let expenses_table = $('#expenses_table').DataTable({
+                        lengthChange: true,
+                        lengthMenu: [[25, 50, 100, -1], [25, 50, 100, 'All']],
+                        order: [[2, 'desc']],
+                        searching: true,
+                        info: false,
+                        sDom: 'tpl',
+                        oLanguage: {sLengthMenu: '_MENU_'},
+                        initComplete: (settings, json) => {
+                            $('#expenses_table_length').appendTo('#expenses_table_length_area');
+                            $('#expenses_table_paginate').addClass('btn-sm p-0').appendTo('#expenses_table_pagination_area');
+                            $('#expenses_table_pagination_area .pagination').addClass('mb-0');
+                        }
+
+                    }).on('draw.dt', function () {
+                        $('#expenses_table_pagination_area .pagination').addClass('mb-0');
+                    });
+
+                    $('#expenses_table_search').keyup(function () {
+                        expenses_table.search($(this).val()).draw();
+                    });
+
+                    let categories_balance_table = $('#categories_balance_table').DataTable({
+                        pageLength: 5,
+                        lengthChange: false,
+                        searching: true,
+                        info: false,
+                        sDom: 'tpl',
+                        initComplete: (settings, json) => {
+                            $('#categories_balance_table_paginate').addClass('btn-sm p-0').appendTo('#categories_balance_table_pagination_area');
+                            $('#categories_balance_table_pagination_area .pagination').addClass('mb-0');
+                        }
+
+                    }).on('draw.dt', function () {
+                        $('#categories_balance_table_pagination_area .pagination').addClass('mb-0');
+                    });
+
+                    $('#categories_balance_table_search').keyup(function () {
+                        categories_balance_table.search($(this).val()).draw();
+                    });
+
+                }).fail(function (xhr, status, error) {
+                    console.log(status, error);
+                });
+            }
+
+            function chartUpdate() {
+                let fromDate = $('#from_date').val();
+                let toDate = $('#to_date').val();
+                let categoryId = $('#category').val();
+
+                $.get(`/expense-categories-chart/${fromDate}/${toDate}/${categoryId}`, function (response) {
+                    expenses_categories_chart.data.labels = response.labels;
+                    expenses_categories_chart.data.datasets[0].data = response.values;
+                    expenses_categories_chart.data.datasets[0].backgroundColor = response.colors;
+                    expenses_categories_chart.update();
+
+                    $('#expenses_categories_chart_total').text(response.total)
+
+                }).fail(function (xhr, status, error) {
+                    console.log(status, error);
+                });
+            }
+
+            function favoritesUpdate() {
+                $.get('{{ url_for('dashboard.favorites') }}', function (response) {
+                    $('#favorites_area').html(response);
+
+                    $('#favorites').sortable().disableSelection().on('sortupdate', function (e, ui) {
+                        let orderedItem = $(ui.item);
+                        $.ajax({
+                            url: `/favorite/${orderedItem.val()}`,
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            dateType: 'json',
+                            data: JSON.stringify({'order': orderedItem.index()}),
+                            error: (xhr, status, error) => {console.log(status, error)},
+                            success: () => favoritesUpdate()
+                        });
+                    });
+                });
+            }
+
+            function dropdownStateUpdate(dropdown, selectedElement) {
+                if (!selectedElement.hasClass('dropdown-item') && !selectedElement.hasClass('colored-dropdown-item'))
+                    return;
+
+                let selectedValue = selectedElement.val()
+                if (selectedValue === undefined)
+                    return;
+
+                $('input[type="hidden"]', dropdown).val(selectedValue);
+                $('.dropdown-item.active, .colored-dropdown-item.active', dropdown).removeClass('active');
+                $(`.dropdown-item[value="${selectedValue}"], .colored-dropdown-item[value="${selectedValue}"]`, dropdown).addClass('active');
+                $('.dropdown-toggle', dropdown)
+                    .text(selectedElement.text())
+                    .css('color', '#fff')
+                    .css('background-color', selectedElement.css('background-color'))
+                    .css('border-color', selectedElement.css('background-color'));
+            }
+
+            function expenseModal(url) {
+                modal(url,
+                    function (content) {
+                        $('#date', content).datepicker({dateFormat: 'dd-mm-yy'});
+
+                        let selectedValue = $('.dropdown input[type="hidden"]', content).val();
+                        if (selectedValue)
+                            dropdownStateUpdate($('.dropdown', content),
+                                $('.dropdown .colored-dropdown-item[value=' + selectedValue + ']', content));
+                    },
+                    function () {
+                        tablesUpdate();
+                        chartUpdate();
+                        favoritesUpdate();
+                    });
+            }
+
+            $(function () {
+                $('#from_date, #to_date').datepicker({dateFormat: 'dd-mm-yy'}).change(function () {
+                    tablesUpdate();
+                    chartUpdate();
+                });
+
+                tablesUpdate();
+                chartUpdate();
+                favoritesUpdate();
+            });
+
+            $(document).on('hide.bs.dropdown', '.dropdown:not(header .dropdown)', function (e) {
+                dropdownStateUpdate(this, $(e.clickEvent.target, this))
+
+                if ($(e.relatedTarget).attr('id') === 'category-dropdown') {
+                    tablesUpdate();
+                    chartUpdate();
+                }
+            }).on('click', '#expenses_table td button[name="edit"]', function (e) {
+                expenseModal('{{ url_for('dashboard.expense_form_update', expense_id='0') }}'.replace('0', $(this).val()))
+
+            }).on('click', '#expenses_table td button[name="delete"]', function (e) {
+                expenseModal('{{ url_for('dashboard.expense_form_delete', expense_id='0') }}'.replace('0', $(this).val()))
+
+            }).on('click', '#favorites li', function (e) {
+                $.post('{{ url_for('api.expensereplica') }}', `id=${$(this).val()}`).done(function () {
+                    tablesUpdate();
+                    chartUpdate();
+
+                }).fail(function (xhr, status, error) {
+                    console.log(status, error);
+                });
+            });
+
+            $('#expense_new').click(function () {
+                expenseModal('{{ url_for('dashboard.expense_form_create') }}')
+            });
+        });
+    </script>
+
+{% endblock %}
+{% block content %}
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h3>Favorites</h3>
+                </div>
+                <div class="card-body">
+                    <div id="favorites_area"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col-12">
+            <hr>
+        </div>
+    </div>
+    <div class="row align-items-end mt-1">
+        <div class="col-md-2">
+            <label for="from_date">From date:</label>
+            <input id="from_date" class="form-control form-control-sm" type="text" value="{{ data.from_date }}" readonly>
+        </div>
+        <div class="col-md-2">
+            <label for="to_date">To date:</label>
+            <input id="to_date" class="form-control form-control-sm" type="text" value="{{ data.to_date }}" readonly>
+        </div>
+        <div class="col-md-auto">
+            <label for="category-dropdown">Category:</label>
+            <div class="dropdown">
+                <button id="category-dropdown" class="dropdown-toggle btn btn-sm btn-primary" type="button" data-bs-toggle="dropdown" aria-expanded="false">All</button>
+                <ul class="dropdown-menu" aria-labelledby="category-dropdown">
+                    <li>
+                        <button class="dropdown-item active" type="button" value="0">All</button>
+                    </li>
+                    {% for category in data.categories %}
+                    <li>
+                        <button class="colored-dropdown-item" style="--bg-color:{{ category.color }}; --color:#fff" type="button" value="{{ category.id }}">{{ category.name }}</button>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <input id="category" name="category" type="hidden" value="0" autocomplete="off">
+            </div>
+        </div>
+        <div class="col-md-auto mt-1">
+            <a class="btn btn-sm btn-outline-danger" href="{{ url_for('dashboard.home') }}" type="button">Reset</a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-4 mt-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <h3>Charts</h3>
+                </div>
+                <div class="card-body">
+                    <canvas id="expenses_categories_chart"></canvas>
+                </div>
+                <div style="height: 52px;" class="card-footer">
+                    <div class="h-100 d-flex align-items-center">
+                        <h5 class="m-0">Total spent: <span id="expenses_categories_chart_total">0</span></h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8 mt-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col-6">
+                            <h3>Categories balance</h3>
+                        </div>
+                        <div class="col-6 d-flex align-items-start justify-content-end">
+                            <label for="categories_balance_table_search" hidden></label>
+                            <input id="categories_balance_table_search" style="width: 180px; max-width: 180px;" class="form-control form-control-sm" type="text" placeholder="Search">
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="container-lg">
+                        <div id="categories_balance_table_area" class="table-responsive-md">
+                            Loading...
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="container d-flex justify-content-end pe-0">
+                        <div id="categories_balance_table_pagination_area"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col-4">
+                            <h3>Expenses</h3>
+                        </div>
+                        <div class="col-8">
+                            <div class="row justify-content-end">
+                                <div class="col-sm-auto text-end">
+                                    <div id="expenses_table_length_area"></div>
+                                </div>
+                                <div class="col-sm-auto d-flex align-items-start justify-content-end">
+                                    <label for="expenses_table_search" hidden>Search</label>
+                                    <input id="expenses_table_search" style="width: 180px; max-width: 180px;" class="form-control form-control-sm" type="text" placeholder="Search">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="container-lg">
+                        <div id="expenses_table_area" class="table-responsive-md">
+                            Loading...
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="row justify-content-between">
+                        <div class="col-2">
+                            <button id="expense_new" class="btn btn-sm btn-primary" type="button">New</button>
+                        </div>
+                        <div class="col-4">
+                            <div id="expenses_table_pagination_area" class="d-flex justify-content-end"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- popups -->
+    <div id="modal" class="modal fade" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="modal_title" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content border-0 shadow-lg">
+                <h3 id="modal_title" class="d-none"></h3>
+                <div id="modal_content_area" class="modal-body p-0"></div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
