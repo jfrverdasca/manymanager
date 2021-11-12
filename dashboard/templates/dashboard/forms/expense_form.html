@@ -21,7 +21,7 @@
                         {{ form.description(class="form-control is-invalid") }}
                         <div class="invalid-feedback">
                             {% for error in form.description.errors %}
-                                {{ error }}
+                                <small>{{ error }}</small>
                             {% endfor %}
                         </div>
                     {% else %}
@@ -47,7 +47,7 @@
                             <input id="{{ form.category.id }}" name="{{ form.category.name }}" class="is-invalid" type="hidden">
                             <div class="invalid-feedback">
                                 {% for error in form.category.errors %}
-                                    {{ error }}
+                                    <small>{{ error }}</small>
                                 {% endfor %}
                             </div>
                         {% else %}
@@ -65,7 +65,7 @@
                         {{ form.date(class="form-control is-invalid", readonly=true) }}
                         <div class="invalid-feedback">
                             {% for error in form.date.errors %}
-                                {{ error }}
+                                <small>{{ error }}</small>
                             {% endfor %}
                         </div>
                     {% else %}
@@ -82,7 +82,7 @@
                         {{ form.time(class="form-control is-invalid", type="text") }}
                         <div class="invalid-feedback">
                             {% for error in form.time.errors %}
-                                {{ error }}
+                                <small>{{ error }}</small>
                             {% endfor %}
                         </div>
                     {% else %}
@@ -99,7 +99,7 @@
                         {{ form.value(class="form-control is-invalid", type="number") }}
                         <div class="invalid-feedback">
                             {% for error in form.value.errors %}
-                                {{ error }}
+                                <small>{{ error }}</small>
                             {% endfor %}
                         </div>
                     {% else %}

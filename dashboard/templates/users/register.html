@@ -1,47 +1,65 @@
 {% extends 'base/base.html' %}
 {% block content %}
     <div class="row justify-content-center mt-5">
-        <div class="col-auto">
+        <div class="col-5">
             <div class="card shadow-sm">
                 <div class="card-header">
                     <h3>Register</h3>
                 </div>
-                <form method="post">
+                <form method="post" novalidate>
                     {{ form.hidden_tag() }}
                     <div class="card-body">
                         <div class="row align-items-center mb-1">
-                            <div class="col">
+                            <div class="col-lg-5">
                                 {{ form.email.label }}:
                             </div>
-                            <div class="col-md-auto">
-                                {{ form.email(class="form-control") }}
+                            <div class="col-lg-7">
+                                {% if form.email.errors %}
+                                    {{ form.email(class="form-control is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.email.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.email(class="form-control") }}
+                                {% endif %}
                             </div>
                         </div>
                         <div class="row align-items-center mb-1">
-                            <div class="col">
+                            <div class="col-lg-5">
                                 {{ form.password.label }}:
                             </div>
-                            <div class="col-md-auto">
-                                {{ form.password(class="form-control") }}
+                            <div class="col-lg-7">
+                                {% if form.password.errors %}
+                                    {{ form.password(class="form-control is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.password.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.password(class="form-control") }}
+                                {% endif %}
                             </div>
                         </div>
                         <div class="row align-items-center mb-1">
-                            <div class="col">
+                            <div class="col-lg-5">
                                 {{ form.password_confirmation.label }}:
                             </div>
-                            <div class="col-md-auto">
-                                {{ form.password_confirmation(class="form-control") }}
+                            <div class="col-lg-7">
+                                {% if form.password_confirmation.errors %}
+                                    {{ form.password_confirmation(class="form-control is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.password_confirmation.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.password_confirmation(class="form-control") }}
+                                {% endif %}
                             </div>
                         </div>
-                        {% if form.errors %}
-                        <div class="row align-items-center">
-                            <div class="col">
-                                <div class="alert alert-danger text-center py-2 m-0" role="alert">
-                                    Invalid credentials
-                                </div>
-                            </div>
-                        </div>
-                        {% endif %}
                     </div>
                     <div class="card-footer">
                         <div class="row justify-content-between">

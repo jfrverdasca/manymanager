@@ -18,7 +18,7 @@
                                     {{ form.email(class="form-control is-invalid") }}
                                     <div class="invalid-feedback">
                                         {% for error in form.email.errors %}
-                                            {{ error }}
+                                            <small>{{ error }}</small>
                                         {% endfor %}
                                     </div>
                                 {% else %}
@@ -35,7 +35,7 @@
                                     {{ form.password(class="form-control is-invalid") }}
                                     <div class="invalid-feedback">
                                         {% for error in form.password.errors %}
-                                            {{ error }}
+                                            <small>{{ error }}</small>
                                         {% endfor %}
                                     </div>
                                 {% else %}
@@ -51,17 +51,6 @@
                                 <small>{{ form.remember(class="form-check-input align-text-bottom") }}</small>
                             </div>
                         </div>
-                        <!--<div class="row align-items-center mt-3">
-                            <div class="container">
-                            {% with messages = get_flashed_messages(with_categories=True) %}
-                                {% for category, message in messages %}
-                                    <div class="alert alert-{{ category }} text-center py-2 m-0" role="alert">
-                                    {{ message }}
-                                    </div>
-                                {% endfor %}
-                            {% endwith %}
-                            </div>
-                        </div>-->
                     </div>
                     <div class="card-footer">
                         <div class="row justify-content-between">

@@ -1,0 +1,6 @@
+venv
+docker-compose.yaml
+dockerfile
+mysql_pw.txt
+**/__pycache__
+**/*.pyc
