@@ -1,6 +1,6 @@
 {% extends 'base/base.html' %}
 {% block header %}
-    <!-- custom css -->
+    <!-- custom -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
     <script type="text/javascript" src="{{ url_for('static', filename='js/utilities.js') }}"></script>
 
@@ -179,20 +179,20 @@
             });
 
             $(document).on('hide.bs.dropdown', '.dropdown:not(header .dropdown)', function (e) {
-                dropdownStateUpdate(this, $(e.clickEvent.target, this))
+                dropdownStateUpdate(this, $(e.clickEvent.target, this));
 
                 if ($(e.relatedTarget).attr('id') === 'category-dropdown') {
                     tablesUpdate();
                     chartUpdate();
                 }
             }).on('click', '#expenses_table td button[name="edit"]', function (e) {
-                expenseModal('{{ url_for('dashboard.expense_form_update', expense_id='0') }}'.replace('0', $(this).val()))
+                expenseModal('{{ url_for('dashboard.expense_form_update', expense_id='0') }}'.replace('0', $(this).val()));
 
             }).on('click', '#expenses_table td button[name="delete"]', function (e) {
-                expenseModal('{{ url_for('dashboard.expense_form_delete', expense_id='0') }}'.replace('0', $(this).val()))
+                expenseModal('{{ url_for('dashboard.expense_form_delete', expense_id='0') }}'.replace('0', $(this).val()));
 
             }).on('click', '#favorites li', function (e) {
-                $.post('{{ url_for('api.expensereplica') }}', `id=${$(this).val()}`).done(function () {
+                $.post('{{ url_for('api.expensereplica') }}', `csrf_token={{ csrf_token() }}&id=${$(this).val()}`).done(function () {
                     tablesUpdate();
                     chartUpdate();
 
@@ -281,14 +281,21 @@
                         </div>
                         <div class="col-6 d-flex align-items-start justify-content-end">
                             <label for="categories_balance_table_search" hidden></label>
-                            <input id="categories_balance_table_search" style="width: 180px; max-width: 180px;" class="form-control form-control-sm" type="text" placeholder="Search">
+                            <input id="categories_balance_table_search" class="form-control form-control-sm table-search-input" type="text" placeholder="Search">
                         </div>
                     </div>
                 </div>
                 <div class="card-body">
                     <div class="container-lg">
                         <div id="categories_balance_table_area" class="table-responsive-md">
-                            Loading...
+                            <div class="d-flex align-items-center">
+                                <div class="d-inline">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                                <h5 class="d-inline ms-3 mb-0">Loading...</h5>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -315,7 +322,7 @@
                                 </div>
                                 <div class="col-sm-auto d-flex align-items-start justify-content-end">
                                     <label for="expenses_table_search" hidden>Search</label>
-                                    <input id="expenses_table_search" style="width: 180px; max-width: 180px;" class="form-control form-control-sm" type="text" placeholder="Search">
+                                    <input id="expenses_table_search" class="form-control form-control-sm table-search-input" type="text" placeholder="Search">
                                 </div>
                             </div>
                         </div>
@@ -324,7 +331,14 @@
                 <div class="card-body">
                     <div class="container-lg">
                         <div id="expenses_table_area" class="table-responsive-md">
-                            Loading...
+                            <div class="d-flex align-items-center">
+                                <div class="d-inline">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                                <h5 class="d-inline ms-3 mb-0">Loading...</h5>
+                            </div>
                         </div>
                     </div>
                 </div>

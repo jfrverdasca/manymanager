@@ -1,0 +1,232 @@
+{% extends 'base/base.html' %}
+{% block header %}
+    <!-- custom -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    <script type="text/javascript" src="{{ url_for('static', filename='js/utilities.js') }}"></script>
+
+    <!-- jquery data table -->
+    <script src="https://cdn.datatables.net/1.11.0/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.0/js/dataTables.bootstrap5.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            function tablesUpdate() {
+                $.get('{{ url_for('dashboard.settings_table') }}', function (response) {
+                    $('#categories_table_area, #favorites_table_area').empty();
+                    $('#categories_table_pagination_area, #favorites_table_pagination_area').empty()
+
+                    let parsedResponse = $(response);
+                    parsedResponse.filter('#categories_table').appendTo('#categories_table_area');
+                    parsedResponse.filter('#favorites_table').appendTo('#favorites_table_area');
+
+                    let categories_table = $('#categories_table').DataTable({
+                        pageLength: 10,
+                        lengthChange: false,
+                        order: [[0, 'desc']],
+                        searching: true,
+                        info: false,
+                        sDom: 'tp',
+                        initComplete: (settings, json) => {
+                            $('#categories_table_paginate').addClass('btn-sm p-0').appendTo('#categories_table_pagination_area');
+                            $('#categories_table_pagination_area .pagination').addClass('mb-0');
+                        }
+
+                    }).on('draw.dt', function () {
+                        $('#categories_table_pagination_area .pagination').addClass('mb-0');
+                    });
+
+                    $('#categories_table_search').keyup(function () {
+                        categories_table.search($(this).val()).draw();
+                    });
+
+                    let favorites_table = $('#favorites_table').DataTable({
+                        pageLength: 10,
+                        lengthChange: false,
+                        order: [[3, 'asc']],
+                        searching: true,
+                        info: false,
+                        sDom: 'tp',
+                        initComplete: (settings, json) => {
+                            $('#favorites_table_paginate').addClass('btn-sm p-0').appendTo('#favorites_table_pagination_area');
+                            $('#favorites_table_pagination_area .pagination').addClass('mb-0');
+                        }
+
+                    }).on('draw.dt', function () {
+                        $('#favorites_table_pagination_area .pagination').addClass('mb-0');
+                    });
+
+                    $('#favorites_table_search').keyup(function () {
+                        favorites_table.search($(this).val()).draw();
+                    });
+
+                }).fail(function (xhr, status, error) {
+                    console.log(status, error);
+                });
+            }
+
+            function categoryModal(url) {
+                modal(url, undefined, function () {
+                    tablesUpdate();
+                });
+            }
+
+            $(function () {
+                tablesUpdate();
+            });
+
+            $(document).on('click', '#categories_table td button[name="edit"]', function (e) {
+                categoryModal('{{ url_for('dashboard.category_form_update', category_id='0') }}'.replace('0', $(this).val()));
+
+            }).on('click', '#categories_table td button[name="delete"]', function (e) {
+                categoryModal('{{ url_for('dashboard.category_form_delete', category_id='0') }}'.replace('0', $(this).val()));
+            });
+
+            $('#category_new').click(function () {
+                categoryModal('{{ url_for('dashboard.category_form_create') }}')
+            });
+        });
+    </script>
+{% endblock %}
+{% block content %}
+    <div class="row mt-3">
+        <div class="col-10">
+            <h3>User settings</h3>
+        </div>
+        <div class="col-2 text-end">
+            <a class="btn btn-sm btn-dark" href="{{ url_for('dashboard.home') }}">Back</a>
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col-6">
+                            <h3>Alerts</h3>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-start justify-content-end">
+                                <label for="alerts_table_search" hidden>Search</label>
+                                <input id="alerts_table_search" class="form-control form-control-sm table-search-input" type="text" placeholder="Search">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="container-lg">
+                        <div id="alerts_table_area" class="table-responsive-md">
+                            <div class="d-flex align-items-center">
+                                <div class="d-inline">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                                <h5 class="d-inline ms-3 mb-0">Loading...</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="row justify-content-between">
+                        <div class="col-2">
+                            <button id="alert_new" class="btn btn-sm btn-primary" type="button">New</button>
+                        </div>
+                        <div class="col-4">
+                            <div id="alerts_table_pagination_area" class="d-flex justify-content-end"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6 mt-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col-6">
+                            <h3>Categories</h3>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-start justify-content-end">
+                                <label for="categories_table_search" hidden>Search</label>
+                                <input id="categories_table_search" class="form-control form-control-sm table-search-input" type="text" placeholder="Search">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="container-lg">
+                        <div id="categories_table_area" class="table-responsive-md">
+                            <div class="d-flex align-items-center">
+                                <div class="d-inline">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                                <h5 class="d-inline ms-3 mb-0">Loading...</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="row justify-content-between">
+                        <div class="col-2">
+                            <button id="category_new" class="btn btn-sm btn-primary" type="button">New</button>
+                        </div>
+                        <div class="col-4">
+                            <div id="categories_table_pagination_area" class="d-flex justify-content-end"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mt-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col-6">
+                            <h3>Favorites</h3>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-start justify-content-end">
+                                <label for="favorites_table_search" hidden>Search</label>
+                                <input id="favorites_table_search" class="form-control form-control-sm table-search-input" type="text" placeholder="Search">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="container-lg">
+                        <div id="favorites_table_area" class="table-responsive-md">
+                            <div class="d-flex align-items-center">
+                                <div class="d-inline">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                                <h5 class="d-inline ms-3 mb-0">Loading...</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="row justify-content-end">
+                        <div class="col-4">
+                            <div id="favorites_table_pagination_area" class="d-flex justify-content-end"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- popups -->
+    <div id="modal" class="modal fade" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="modal_title" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content border-0 shadow-lg">
+                <h3 id="modal_title" class="d-none"></h3>
+                <div id="modal_content_area" class="modal-body p-0"></div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

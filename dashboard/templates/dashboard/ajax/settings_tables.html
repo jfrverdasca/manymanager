@@ -1,0 +1,52 @@
+<table id="categories_table" class="table w-100">
+    <thead>
+        <tr>
+            <td>Name</td>
+            <td>Limit</td>
+            <td>Options</td>
+        </tr>
+    </thead>
+    <tbody>
+    {% for row in data.categories %}
+        <tr>
+            <td style="color: {{ row.color }};">{{ row.name }}</td>
+            <td>{{ row.limit }}</td>
+            <td>
+                <!-- buttons bellow work with home expense modal javascript -->
+                <button name="edit" class="btn btn-sm text-primary text-decoration-none shadow-none p-0" value="{{ row.id }}">
+                    <i class="bi-pencil" style="font-size: 18px;"></i>
+                </button>
+                <button name="delete" class="btn btn-sm text-danger text-decoration-none shadow-none p-0 ms-2" value="{{ row.id }}">
+                    <i class="bi-trash" style="font-size: 18px;"></i>
+                </button>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<table id="favorites_table" class="table w-100">
+    <thead>
+        <tr>
+            <td>Description</td>
+            <td>Value</td>
+            <td>Options</td>
+            <td hidden>Favorite Order</td> <!-- just for column ordering -->
+        </tr>
+    </thead>
+    <tbody>
+    {% for row in data.favorites %}
+        <tr>
+            <td style="color: {{ row.category.color }};">{{ row.description }}</td>
+            <td>{{ row.value }}</td>
+            <td>
+                <!-- buttons bellow work with home expense modal javascript -->
+                <button name="delete" class="btn btn-sm text-danger text-decoration-none shadow-none p-0 ms-2" value="{{ row.id }}">
+                    <i class="bi-bookmark-star" style="font-size: 18px;"></i>
+                </button>
+            </td>
+            <td hidden>{{ row.favorite_order }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>

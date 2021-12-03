@@ -13,7 +13,7 @@
         {{ form.hidden_tag() }}
         <div class="card-body">
             <p>
-                Delete expense <strong>{{ object.description }}</strong> from {{ object.timestamp | formatdatetime }}?
+                Delete category <strong style="color: {{ object.color }}">{{ object.name }}</strong>?
             </p>
         </div>
         <div class="card-footer">

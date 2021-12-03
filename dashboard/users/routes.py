@@ -1,9 +1,13 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash
+import logging
+
+from flask import Blueprint, render_template, redirect, url_for, request, flash, session
 from flask_login import current_user, login_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from .forms import RegisterForm, LoginForm, RequestPasswordResetForm, PasswordResetForm
 from dashboard.utilities import send_email
 from dashboard.models import db, User
+
+logger = logging.getLogger(__name__)
 
 users_blueprint = Blueprint('auth', __name__)
 

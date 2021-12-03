@@ -1,12 +1,10 @@
-import bdb
-
 from flask import Blueprint, request, render_template, redirect, url_for, abort, Response
 from flask_login import login_required, current_user
 from sqlalchemy.sql import func
 from datetime import datetime
 from calendar import monthrange
 from dashboard.models import db, Expense, Category
-from .forms import ExpenseForm, DeleteForm
+from .forms import ExpenseForm, CategoryForm, DeleteForm
 
 dashboard_blueprint = Blueprint('dashboard', __name__)
 
@@ -56,18 +54,28 @@ def home_tables(from_date, to_date, category_id):
 @dashboard_blueprint.route('/favorites', methods=['GET'])
 def favorites():
     if not current_user.is_authenticated:
-        abort(403)
+        abort(401)
 
     return render_template('dashboard/ajax/home_favorites.html',
                            favorites=Expense.query.filter_by(owner=current_user.id, is_favorite=True)
                            .join(Category, Expense.category_id == Category.id).order_by('favorite_order').all())
 
 
+@dashboard_blueprint.route('/settings-table', methods=['GET'])
+def settings_table():
+    if not current_user.is_authenticated:
+        abort(401)
+
+    return render_template('dashboard/ajax/settings_tables.html', data={
+        'categories': Category.query.filter_by(owner=current_user.id).all(),
+        'favorites': Expense.query.filter_by(owner=current_user.id, is_favorite=True).all()})
+
+
 # popups
 @dashboard_blueprint.route('/expense/new', methods=['GET', 'POST'])
 def expense_form_create():
     if not current_user.is_authenticated:
-        abort(403)
+        abort(401)
 
     form = ExpenseForm()
     form.date.data = datetime.now().date()
@@ -97,7 +105,7 @@ def expense_form_create():
 @dashboard_blueprint.route('/expense/<int:expense_id>/update', methods=['GET', 'POST'])
 def expense_form_update(expense_id):
     if not current_user.is_authenticated:
-        abort(403)
+        abort(401)
 
     expense = Expense.query.get_or_404(expense_id)
     if expense.owner != current_user.id:
@@ -155,6 +163,91 @@ def expense_form_delete(expense_id):
     return render_template('dashboard/forms/expense_delete_form.html', form=form, object=expense)
 
 
+@dashboard_blueprint.route('/category/new', methods=['GET', 'POST'])
+def category_form_create():
+    if not current_user.is_authenticated:
+        abort(401)
+
+    form = CategoryForm()
+    if form.validate_on_submit():
+        try:
+            category = Category(name=form.name.data,
+                                description=form.description.data,
+                                limit=form.limit.data,
+                                color=form.color.data,
+                                owner=current_user.id)
+
+            db.session.add(category)
+            db.session.commit()
+
+        except Exception:
+            abort(500)
+
+        else:
+            return Response(status=200)  # status 200 and no request data means success (close popup)
+
+    return render_template('dashboard/forms/category_form.html', form=form)
+
+
+@dashboard_blueprint.route('/category/<int:category_id>/update', methods=['GET', 'POST'])
+def category_form_update(category_id):
+    if not current_user.is_authenticated:
+        abort(403)
+
+    category = Category.query.get_or_404(category_id)
+    if category.owner != current_user.id:
+        abort(401)
+
+    form = CategoryForm()
+    if form.validate_on_submit():
+        try:
+            category.name = form.name.data
+            category.description = form.description.data
+            category.limit = form.limit.data
+            category.color = form.color.data
+
+            db.session.commit()
+
+        except Exception:
+            abort(500)
+
+        else:
+            return Response(status=200)  # status 200 and no request data means success (close popup)
+
+    form.name.data = category.name
+    form.description.data = category.description
+    form.limit.data = category.limit
+    form.color.data = category.color
+
+    return render_template('dashboard/forms/category_form.html', form=form)
+
+
+@dashboard_blueprint.route('/category/<int:category_id>/delete', methods=['GET', 'POST'])
+def category_form_delete(category_id):
+    if not current_user.is_authenticated:
+        abort(403)
+
+    category = Category.query.get_or_404(category_id)
+    if category.owner != current_user.id:
+        abort(401)
+
+    form = DeleteForm()
+    if form.validate_on_submit():
+        try:
+            db.session.delete(category)
+            db.session.commit()
+
+        except Exception as e:
+            print(e)
+            abort(500)
+
+        else:
+            return Response(status=200)  # status 200 and no request data means success (close popup)
+
+    return render_template('dashboard/forms/category_delete_form.html', form=form, object=category)
+
+
+# pages
 @dashboard_blueprint.route('/', methods=['GET'])
 @login_required
 def home():
@@ -166,3 +259,9 @@ def home():
             'to_date': datetime_now.replace(day=end_month_day).strftime('%d-%m-%Y')}
 
     return render_template('dashboard/home.html', data=data)
+
+
+@dashboard_blueprint.route('/settings', methods=['GET'])
+@login_required
+def settings():
+    return render_template('dashboard/settings.html')

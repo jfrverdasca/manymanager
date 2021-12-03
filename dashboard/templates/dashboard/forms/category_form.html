@@ -1,0 +1,203 @@
+<script>
+    $(document).ready(function () {
+        function colorUpdate(color) {
+            $('.dropdown-toggle')
+                .css('color', '#fff')
+                .css('background-color', color)
+                .css('border-color', color);
+
+            $('#color').val(color);
+        }
+
+        $(function () {
+            colorUpdate($('#color').val());
+        })
+
+        $(document).on('hide.bs.dropdown', '.dropdown-toggle', function (e) {
+            let selectedElement = $(e.clickEvent.target, this)
+
+            if (selectedElement.hasClass('color-dot'))
+                colorUpdate(selectedElement.css('--bg-color'));
+
+        }).on('keyup', '#color', function () {
+            colorUpdate($(this).val());
+        });
+    });
+</script>
+<div class="card shadow-lg">
+    <div class="card-header">
+        <div class="row justify-content-between">
+            <div class="col-10">
+                <h3>Create category</h3>
+            </div>
+            <div class="col-2 text-end">
+                <button type="button" class="btn-close p-2" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+    <form class="needs-validation" method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <div class="card-body">
+            <div class="row justify-content-start align-items-center">
+                <div class="col-3">
+                    {{ form.name.label }}
+                </div>
+                <div class="col-6">
+                    {% if form.name.errors %}
+                        {{ form.name(class="form-control is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.name.errors %}
+                                <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.name(class="form-control") }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row justify-content-start align-items-center mt-1">
+                <div class="col-3">
+                    {{ form.description.label }}
+                </div>
+                <div class="col-6">
+                    {% if form.description.errors %}
+                        {{ form.description(class="form-control is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.description.errors %}
+                                <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.description(class="form-control") }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row justify-content-start align-items-center mt-1">
+                <div class="col-3">
+                    {{ form.limit.label }}
+                </div>
+                <div class="col-6">
+                    {% if form.limit.errors %}
+                        {{ form.limit(class="form-control is-invalid", type="number") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.limit.errors %}
+                                <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.limit(class="form-control", type="number") }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row justify-content-start align-items-center mt-1">
+                <div class="col-3">
+                    {{ form.color.label }}
+                </div>
+                <div class="col-6">
+                    {% if form.color.errors %}
+                        <div class="input-group">
+                            {{ form.color(class="form-control is-invalid") }}
+                            <span class="input-group-text">
+                                <span class="color-dot"></span>
+                            </span>
+                            <div class="invalid-feedback">
+                                {% for error in form.color.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="input-group">
+                            {{ form.color(class="form-control") }}
+                            <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Color</button>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <div class="row ms-1">
+                                    <div class="col-1">
+                                        <a style="--bg-color: #6ea8fe;" class="color-dot" type="button"></a>
+                                    </div>
+                                    <div class="col-1">
+                                        <a style="--bg-color: #a98eda;" class="color-dot" type="button"></a>
+                                    </div>
+                                    <div class="col-1">
+                                        <a style="--bg-color: #e685b5;" class="color-dot" type="button"></a>
+                                    </div>
+                                    <div class="col-1">
+                                        <a style="--bg-color: #ea868f;" class="color-dot" type="button"></a>
+                                    </div>
+                                    <div class="col-1">
+                                        <a style="--bg-color: #feb272;" class="color-dot" type="button"></a>
+                                    </div>
+                                    <div class="col-1">
+                                        <a style="--bg-color: #ffda6a;" class="color-dot" type="button"></a>
+                                    </div>
+                                    <div class="col-1">
+                                        <a style="--bg-color: #75b798;" class="color-dot" type="button"></a>
+                                    </div>
+                                    <div class="col-1">
+                                        <a style="--bg-color: #dee2e6;" class="color-dot" type="button"></a>
+                                    </div>
+                                </div>
+                                <div class="row ms-1">
+                                    <div class="col-1">
+                                        <a style="--bg-color: #0d6efd;" class="color-dot" type="button"></a>
+                                    </div>
+                                    <div class="col-1">
+                                        <a style="--bg-color: #6f42c1;" class="color-dot" type="button"></a>
+                                    </div>
+                                    <div class="col-1">
+                                        <a style="--bg-color: #d63384;" class="color-dot" type="button"></a>
+                                    </div>
+                                    <div class="col-1">
+                                        <a style="--bg-color: #dc3545;" class="color-dot" type="button"></a>
+                                    </div>
+                                    <div class="col-1">
+                                        <a style="--bg-color: #fd7e14;" class="color-dot" type="button"></a>
+                                    </div>
+                                    <div class="col-1">
+                                        <a style="--bg-color: #ffc107;" class="color-dot" type="button"></a>
+                                    </div>
+                                    <div class="col-1">
+                                        <a style="--bg-color: #198754;" class="color-dot" type="button"></a>
+                                    </div>
+                                    <div class="col-1">
+                                        <a style="--bg-color: #adb5bd;" class="color-dot" type="button"></a>
+                                    </div>
+                                </div>
+                                <div class="row ms-1">
+                                    <div class="col-1">
+                                        <a style="--bg-color: #084298;" class="color-dot" type="button"></a>
+                                    </div>
+                                    <div class="col-1">
+                                        <a style="--bg-color: #432874;" class="color-dot" type="button"></a>
+                                    </div>
+                                    <div class="col-1">
+                                        <a style="--bg-color: #801f4f;" class="color-dot" type="button"></a>
+                                    </div>
+                                    <div class="col-1">
+                                        <a style="--bg-color: #842029;" class="color-dot" type="button"></a>
+                                    </div>
+                                    <div class="col-1">
+                                        <a style="--bg-color: #984c0c;" class="color-dot" type="button"></a>
+                                    </div>
+                                    <div class="col-1">
+                                        <a style="--bg-color: #997404;" class="color-dot" type="button"></a>
+                                    </div>
+                                    <div class="col-1">
+                                        <a style="--bg-color: #0f5132;" class="color-dot" type="button"></a>
+                                    </div>
+                                    <div class="col-1">
+                                        <a style="--bg-color: #495057;" class="color-dot" type="button"></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            {{ form.submit(class="btn btn-primary") }}
+            <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Cancel</button>
+        </div>
+    </form>
+</div>
