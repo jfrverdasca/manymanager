@@ -78,8 +78,6 @@ def expense_form_create():
         abort(401)
 
     form = ExpenseForm()
-    form.date.data = datetime.now().date()
-    form.time.data = datetime.now().time()
     form.category.choices = Category.query.filter_by(owner=current_user.id).order_by('name').all()
     if form.validate_on_submit():
         try:
@@ -98,6 +96,9 @@ def expense_form_create():
 
         else:
             return Response(status=200)  # status 200 and no request data means success (close popup)
+
+    form.date.data = datetime.now().date()
+    form.time.data = datetime.now().time()
 
     return render_template('dashboard/forms/expense_form.html', form=form)
 
@@ -238,7 +239,6 @@ def category_form_delete(category_id):
             db.session.commit()
 
         except Exception as e:
-            print(e)
             abort(500)
 
         else:

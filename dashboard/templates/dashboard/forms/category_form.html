@@ -1,7 +1,7 @@
 <script>
     $(document).ready(function () {
         function colorUpdate(color) {
-            $('.dropdown-toggle')
+            $('#modal .dropdown-toggle')
                 .css('color', '#fff')
                 .css('background-color', color)
                 .css('border-color', color);
@@ -13,7 +13,7 @@
             colorUpdate($('#color').val());
         })
 
-        $(document).on('hide.bs.dropdown', '.dropdown-toggle', function (e) {
+        $(document).on('hide.bs.dropdown', '#modal .dropdown-toggle', function (e) {
             let selectedElement = $(e.clickEvent.target, this)
 
             if (selectedElement.hasClass('color-dot'))
@@ -36,7 +36,8 @@
         </div>
     </div>
     <form class="needs-validation" method="post" novalidate>
-        {{ form.hidden_tag() }}
+        <!-- hidden_tag not work properly when deployed -->
+        <input id="csrf_token" name="csrf_token" type="hidden" value="{{ csrf_token() }}">
         <div class="card-body">
             <div class="row justify-content-start align-items-center">
                 <div class="col-3">

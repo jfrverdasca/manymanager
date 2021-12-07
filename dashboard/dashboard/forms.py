@@ -7,9 +7,9 @@ class ExpenseForm(FlaskForm):
 
     description = StringField('Description', validators=[validators.DataRequired(), validators.Length(max=500)])
     category = SelectField('Category', validators=[validators.DataRequired()])
-    date = DateField('Date', widget=widgets.TextInput(), format='%d-%m-%Y', default=datetime.now().date(),
+    date = DateField('Date', widget=widgets.TextInput(), format='%d-%m-%Y',
                      validators=[validators.DataRequired()])  # datetime widget does not work properly in some browsers
-    time = TimeField('Time', format='%H:%M:%S', default=datetime.now().time(), validators=[validators.DataRequired()])
+    time = TimeField('Time', format='%H:%M:%S', validators=[validators.DataRequired()])
     value = FloatField('Value', default=0, validators=[validators.DataRequired(), validators.NumberRange(min=0)])
     is_favorite = BooleanField('Favorite', default=False, validators=[validators.Optional()])
     submit = SubmitField('Save')

@@ -7,7 +7,8 @@
                     <h3>Register</h3>
                 </div>
                 <form method="post" novalidate>
-                    {{ form.hidden_tag() }}
+                    <!-- hidden_tag not work properly when deployed -->
+                    <input id="csrf_token" name="csrf_token" type="hidden" value="{{ csrf_token() }}">
                     <div class="card-body">
                         <div class="row align-items-center mb-1">
                             <div class="col-lg-5">
