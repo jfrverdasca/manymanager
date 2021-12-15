@@ -34,6 +34,21 @@
                 }
             });
 
+            let spent_history_chart = new Chart($('#spent_history_chart'), {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: []
+                },
+                options: {
+                    scales: {
+                        yAxes: [{
+                            ticks: {min: 0}
+                        }]
+                    }
+                }
+            });
+
             function tablesUpdate() {
                 let fromDate = $('#from_date').val();
                 let toDate = $('#to_date').val();
@@ -93,15 +108,13 @@
                 });
             }
 
-            function chartUpdate() {
+            function expensesCategoriesChartUpdate() {
                 let fromDate = $('#from_date').val();
                 let toDate = $('#to_date').val();
                 let categoryId = $('#category').val();
 
                 $.get(`/expense-categories-chart/${fromDate}/${toDate}/${categoryId}`, function (response) {
-                    expenses_categories_chart.data.labels = response.labels;
-                    expenses_categories_chart.data.datasets[0].data = response.values;
-                    expenses_categories_chart.data.datasets[0].backgroundColor = response.colors;
+                    expenses_categories_chart.data = response
                     expenses_categories_chart.update();
 
                     $('#expenses_categories_chart_total').text(response.total)
@@ -109,6 +122,13 @@
                 }).fail(function (xhr, status, error) {
                     console.log(status, error);
                 });
+            }
+
+            function historyChartUpdate() {
+                $.get('/history-chart', function (response) {
+                    spent_history_chart.data = response;
+                    spent_history_chart.update();
+                })
             }
 
             function favoritesUpdate() {
@@ -136,18 +156,21 @@
                 if (!selectedElement.hasClass('dropdown-item') && !selectedElement.hasClass('colored-dropdown-item'))
                     return;
 
-                let selectedValue = selectedElement.val()
-                if (selectedValue === undefined)
+                let value = selectedElement.val()
+                if (!value)
                     return;
 
-                $('input[type="hidden"]', dropdown).val(selectedValue);
+                $('input[type="hidden"]', dropdown).val(value);
                 $('.dropdown-item.active, .colored-dropdown-item.active', dropdown).removeClass('active');
-                $(`.dropdown-item[value="${selectedValue}"], .colored-dropdown-item[value="${selectedValue}"]`, dropdown).addClass('active');
-                $('.dropdown-toggle', dropdown)
-                    .text(selectedElement.text())
-                    .css('color', '#fff')
-                    .css('background-color', selectedElement.css('background-color'))
-                    .css('border-color', selectedElement.css('background-color'));
+                $(`.dropdown-item[value="${value}"], .colored-dropdown-item[value="${value}"]`, dropdown).addClass('active');
+                $('.dropdown-toggle', dropdown).text(selectedElement.text())
+
+                if (selectedElement.hasClass('colored-dropdown-item')) {
+                    $('.dropdown-toggle', dropdown)
+                        .css('color', '#fff')
+                        .css('background-color', selectedElement.css('background-color'))
+                        .css('border-color', selectedElement.css('background-color'));
+                }
             }
 
             function expenseModal(url) {
@@ -162,7 +185,7 @@
                     },
                     function () {
                         tablesUpdate();
-                        chartUpdate();
+                        expensesCategoriesChartUpdate();
                         favoritesUpdate();
                     });
             }
@@ -170,12 +193,13 @@
             $(function () {
                 $('#from_date, #to_date').datepicker({dateFormat: 'dd-mm-yy'}).change(function () {
                     tablesUpdate();
-                    chartUpdate();
+                    expensesCategoriesChartUpdate();
                 });
 
                 tablesUpdate();
-                chartUpdate();
                 favoritesUpdate();
+                historyChartUpdate();
+                expensesCategoriesChartUpdate();
             });
 
             $(document).on('hide.bs.dropdown', '.dropdown:not(header .dropdown)', function (e) {
@@ -183,7 +207,7 @@
 
                 if ($(e.relatedTarget).attr('id') === 'category-dropdown') {
                     tablesUpdate();
-                    chartUpdate();
+                    expensesCategoriesChartUpdate();
                 }
             }).on('click', '#expenses_table td button[name="edit"]', function (e) {
                 expenseModal('{{ url_for('dashboard.expense_form_update', expense_id='0') }}'.replace('0', $(this).val()));
@@ -194,7 +218,7 @@
             }).on('click', '#favorites li', function (e) {
                 $.post('{{ url_for('api.expensereplica') }}', `csrf_token={{ csrf_token() }}&id=${$(this).val()}`).done(function () {
                     tablesUpdate();
-                    chartUpdate();
+                    expensesCategoriesChartUpdate();
 
                 }).fail(function (xhr, status, error) {
                     console.log(status, error);
@@ -223,6 +247,41 @@
     </div>
     <div class="row mt-3">
         <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col-6">
+                            <h3>Quick history</h3>
+                        </div>
+                        <div class="col-6 d-flex align-items-center justify-content-end">
+                            <div class="dropdown">
+                                <button id="history-chart-dropdown" class="dropdown-toggle btn btn-sm btn-primary" type="button" data-bs-toggle="dropdown" aria-expanded="False">12 months</button>
+                                <ul class="dropdown-menu" aria-labelledby="history-chart-dropdown">
+                                    <li>
+                                        <button class="dropdown-item" type="button" value="6">6 months</button>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item active" type="button" value="12">12 months</button>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item" type="button" value="18">18 months</button>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item" type="button" value="24">24 months</button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="spent_history_chart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col-12">
             <hr>
         </div>
     </div>
@@ -245,7 +304,7 @@
                     </li>
                     {% for category in data.categories %}
                     <li>
-                        <button class="colored-dropdown-item" style="--bg-color:{{ category.color }}; --color:#fff" type="button" value="{{ category.id }}">{{ category.name }}</button>
+                        <button class="colored-dropdown-item" style="--bg-color: {{ category.color }}; --color: #fff" type="button" value="{{ category.id }}">{{ category.name }}</button>
                     </li>
                     {% endfor %}
                 </ul>

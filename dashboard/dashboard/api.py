@@ -2,6 +2,8 @@ from flask import Blueprint
 from flask_login import current_user
 from flask_restful import Resource, reqparse, marshal_with, marshal, fields, abort
 from sqlalchemy.sql import func, desc
+from datetime import datetime, timedelta
+from calendar import month_name
 from dashboard import api
 from dashboard.models import db, Category, Expense
 
@@ -39,7 +41,7 @@ class ExpensesCategoriesChart(Resource):
                     Expense.query.filter(Expense.owner == current_user.id,
                                          Expense.timestamp >= from_date,
                                          Expense.timestamp <= to_date,
-                                         Expense.category_id == category.id)\
+                                         Expense.category_id == category.id) \
                     .join(Category, Expense.category_id == Category.id) \
                     .with_entities(Category, func.sum(Expense.value).label('sum')) \
                     .group_by(Category) \
@@ -54,19 +56,63 @@ class ExpensesCategoriesChart(Resource):
                 .order_by(desc('sum'))
 
         response = {'labels': list(),
-                    'values': list(),
-                    'colors': list()}
+                    'datasets': None}
+
+        temporary_dataset_data = {'data': list(),
+                                  'backgroundColor': list(),
+                                  'borderWidth': 1}
         for category_obj, category_sum in expenses:
             response['labels'].append(category_obj.name)
-            response['values'].append(round(category_sum, 2))
-            response['colors'].append(category_obj.color)
 
-        response['total'] = round(sum(response['values']), 2)
+            temporary_dataset_data['data'].append(round(category_sum, 2))
+            temporary_dataset_data['backgroundColor'].append(category_obj.color)
+
+        response['total'] = round(sum(temporary_dataset_data['data']), 2)
+        response['datasets'] = [temporary_dataset_data]
 
         return response
 
 
 api.add_resource(ExpensesCategoriesChart, '/expense-categories-chart/<date:from_date>/<date:to_date>/<int:category_id>')
+
+
+class HistoryChart(Resource):
+
+    def get(self):
+        if not current_user.is_authenticated:
+            abort(401, message='Authentication required')
+
+        to_date = datetime.now()
+        from_date = to_date - timedelta(days=365)  # one year interval
+
+        month = func.date_trunc('month', Expense.timestamp)
+
+        expenses = Expense.query.filter(Expense.owner == current_user.id,
+                                        Expense.timestamp >= from_date,
+                                        Expense.timestamp <= to_date) \
+            .join(Category, Expense.category_id == Category.id) \
+            .with_entities(Category, func.sum(Expense.value).label('sum'), month) \
+            .group_by(month, Category) \
+            .order_by(month)
+
+        categories = Category.query.filter_by(owner=current_user.id)
+
+        response = {'labels': [month_name[i] for i in range(1, 13)],
+                    'datasets': {c.name: {'label': c.name,
+                                          'data': [0 for _ in range(12)],
+                                          'borderColor': c.color,
+                                          'backgroundColor': c.color,
+                                          'fill': False} for c in categories}}
+
+        for category_obj, category_sum, month in expenses:
+            month_index = month.month - 1
+            response['datasets'][category_obj.name]['data'][month_index] = category_sum
+
+        response['datasets'] = list(response['datasets'].values())
+        return response
+
+
+api.add_resource(HistoryChart, '/history-chart')
 
 
 class Favorite(Resource):

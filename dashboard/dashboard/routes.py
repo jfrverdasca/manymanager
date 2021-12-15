@@ -1,4 +1,4 @@
-from flask import Blueprint, request, render_template, redirect, url_for, abort, Response
+from flask import Blueprint, render_template, abort, Response
 from flask_login import login_required, current_user
 from sqlalchemy.sql import func
 from datetime import datetime
@@ -238,7 +238,7 @@ def category_form_delete(category_id):
             db.session.delete(category)
             db.session.commit()
 
-        except Exception as e:
+        except Exception:
             abort(500)
 
         else:
@@ -247,8 +247,35 @@ def category_form_delete(category_id):
     return render_template('dashboard/forms/category_delete_form.html', form=form, object=category)
 
 
+@dashboard_blueprint.route('/favorite/<int:expense_id>/remove', methods=['GET', 'POST'])
+def favorite_form_remove(expense_id):
+    if not current_user.is_authenticated:
+        abort(403)
+
+    expense = Expense.query.get_or_404(expense_id)
+    if expense.owner != current_user.id:
+        abort(401)
+
+    form = DeleteForm()
+    if form.validate_on_submit():
+        try:
+            expense.is_favorite = False
+
+            db.session.commit()
+
+        except Exception:
+            abort(500)
+
+        else:
+            return Response(status=200)  # status 200 and no request data means success (close popup)
+
+    return render_template('dashboard/forms/remove_favorite_form.html', form=form, object=expense)
+
+
 # pages
 @dashboard_blueprint.route('/', methods=['GET'])
+@dashboard_blueprint.route('/index', methods=['GET'])
+@dashboard_blueprint.route('/home', methods=['GET'])
 @login_required
 def home():
     datetime_now = datetime.now()

@@ -70,6 +70,12 @@
                 });
             }
 
+            function favoriteModal(url) {
+                modal(url, undefined, function () {
+                    tablesUpdate();
+                })
+            }
+
             $(function () {
                 tablesUpdate();
             });
@@ -79,6 +85,9 @@
 
             }).on('click', '#categories_table td button[name="delete"]', function (e) {
                 categoryModal('{{ url_for('dashboard.category_form_delete', category_id='0') }}'.replace('0', $(this).val()));
+
+            }).on('click', '#favorites_table td button[name="remove"]', function (e) {
+                favoriteModal('{{ url_for('dashboard.favorite_form_remove', expense_id='0') }}'.replace('0', $(this).val()));
             });
 
             $('#category_new').click(function () {

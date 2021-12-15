@@ -1,0 +1,25 @@
+<div class="card shadow-lg">
+    <div class="card-header">
+        <div class="row justify-content-between">
+            <div class="col-10">
+                <h3>Delete expense</h3>
+            </div>
+            <div class="col-2 text-end">
+                <button type="button" class="btn-close p-2" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+    <form class="needs-validation" method="post" novalidate>
+        <!-- hidden_tag not work properly when deployed -->
+        <input id="csrf_token" name="csrf_token" type="hidden" value="{{ csrf_token() }}">
+        <div class="card-body">
+            <p>
+                Remove favorite <strong>{{ object.description }}</strong> with value {{ object.value }}?
+            </p>
+        </div>
+        <div class="card-footer">
+            {{ form.submit(class="btn btn-danger", value="Remove") }}
+            <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Cancel</button>
+        </div>
+    </form>
+</div>
