@@ -125,7 +125,9 @@
             }
 
             function historyChartUpdate() {
-                $.get('/history-chart', function (response) {
+                let months = $('#history-chart-dropdown').parent().find('.dropdown-item.active').val();
+
+                $.get(`/history-chart/${months}`, function (response) {
                     spent_history_chart.data = response;
                     spent_history_chart.update();
                 })
@@ -156,7 +158,7 @@
                 if (!selectedElement.hasClass('dropdown-item') && !selectedElement.hasClass('colored-dropdown-item'))
                     return;
 
-                let value = selectedElement.val()
+                let value = selectedElement.val();
                 if (!value)
                     return;
 
@@ -185,8 +187,9 @@
                     },
                     function () {
                         tablesUpdate();
-                        expensesCategoriesChartUpdate();
                         favoritesUpdate();
+                        historyChartUpdate();
+                        expensesCategoriesChartUpdate();
                     });
             }
 
@@ -203,12 +206,16 @@
             });
 
             $(document).on('hide.bs.dropdown', '.dropdown:not(header .dropdown)', function (e) {
-                dropdownStateUpdate(this, $(e.clickEvent.target, this));
+                let clickedTarget = $(e.clickEvent.target, this);
+                dropdownStateUpdate(this, clickedTarget);
 
                 if ($(e.relatedTarget).attr('id') === 'category-dropdown') {
                     tablesUpdate();
                     expensesCategoriesChartUpdate();
-                }
+
+                } else if ($(e.relatedTarget).attr('id') === 'history-chart-dropdown')
+                    historyChartUpdate();
+
             }).on('click', '#expenses_table td button[name="edit"]', function (e) {
                 expenseModal('{{ url_for('dashboard.expense_form_update', expense_id='0') }}'.replace('0', $(this).val()));
 

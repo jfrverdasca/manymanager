@@ -1,8 +1,11 @@
+import copy
+
 from flask import Blueprint
 from flask_login import current_user
-from flask_restful import Resource, reqparse, marshal_with, marshal, fields, abort
+from flask_restful import Resource, reqparse, marshal_with, fields, abort
 from sqlalchemy.sql import func, desc
-from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
+from datetime import datetime
 from calendar import month_name
 from dashboard import api
 from dashboard.models import db, Category, Expense
@@ -78,41 +81,37 @@ api.add_resource(ExpensesCategoriesChart, '/expense-categories-chart/<date:from_
 
 class HistoryChart(Resource):
 
-    def get(self):
+    def get(self, months):
         if not current_user.is_authenticated:
             abort(401, message='Authentication required')
 
         to_date = datetime.now()
-        from_date = to_date - timedelta(days=365)  # one year interval
+        from_date = to_date - relativedelta(months=months)
 
-        month = func.date_trunc('month', Expense.timestamp)
-
+        month_trunc = func.date_trunc('month', Expense.timestamp)
         expenses = Expense.query.filter(Expense.owner == current_user.id,
                                         Expense.timestamp >= from_date,
                                         Expense.timestamp <= to_date) \
             .join(Category, Expense.category_id == Category.id) \
-            .with_entities(Category, func.sum(Expense.value).label('sum'), month) \
-            .group_by(month, Category) \
-            .order_by(month)
+            .with_entities(Category, func.sum(Expense.value).label('sum'), month_trunc) \
+            .group_by(month_trunc, Category) \
+            .order_by(month_trunc)
 
-        categories = Category.query.filter_by(owner=current_user.id)
+        datasets = {c.name: {'label': c.name,
+                             'data': [0 for _ in range(months)],
+                             'borderColor': c.color,
+                             'backgroundColor': c.color,
+                             'fill': False} for c in expenses.with_entities(Category)}
+        for category_obj, category_sum, date in expenses:
+            month_list_index = date.month - (12 - months) - 1
+            datasets[category_obj.name]['data'][month_list_index] = category_sum
 
-        response = {'labels': [month_name[i] for i in range(1, 13)],
-                    'datasets': {c.name: {'label': c.name,
-                                          'data': [0 for _ in range(12)],
-                                          'borderColor': c.color,
-                                          'backgroundColor': c.color,
-                                          'fill': False} for c in categories}}
-
-        for category_obj, category_sum, month in expenses:
-            month_index = month.month - 1
-            response['datasets'][category_obj.name]['data'][month_index] = category_sum
-
-        response['datasets'] = list(response['datasets'].values())
-        return response
+        return {'labels': list(map(lambda m: month_name[(m % 12) + 1],
+                                   range(from_date.month, from_date.month + months))),
+                'datasets': list(datasets.values())}
 
 
-api.add_resource(HistoryChart, '/history-chart')
+api.add_resource(HistoryChart, '/history-chart/<int:months>')
 
 
 class Favorite(Resource):

@@ -1,7 +1,11 @@
 README.md
 venv
 docker-compose.yaml
-dockerfile
-mysql_pw.txt
+dockerfile*
+environment.env
+nginx.conf
+postgres_pw.txt
+README.md
+/dashboard/static
 **/__pycache__
 **/*.pyc

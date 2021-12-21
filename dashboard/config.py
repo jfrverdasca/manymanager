@@ -2,6 +2,7 @@ from os import getenv
 
 
 class Config:
+    FLASK_DEBUG = getenv('FLASK_DEBUG')
     SECRET_KEY = getenv('SECRET_KEY')
 
     # database configurations

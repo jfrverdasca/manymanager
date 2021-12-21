@@ -1,9 +1,6 @@
-FROM debian:10
-ARG DEBIAN_FRONTEND=noninteractive
-ADD . /var/www/manymanager
-WORKDIR /var/www/manymanager
-RUN apt-get update && apt-get install -y python3.7 python3-pip \
-    python3.7-dev libpq-dev gcc libffi-dev apache2 libapache2-mod-wsgi-py3 && \
-    pip3 install -r requirements.txt && \
-    service apache2 restart
-ENTRYPOINT apachectl -D FOREGROUND
+FROM python:3.9.7-buster
+ADD . /manymanager
+WORKDIR /manymanager
+RUN pip3 install -r requirements.txt
+ENTRYPOINT flask run --host=0.0.0.0 --port 8000
+EXPOSE 8000
