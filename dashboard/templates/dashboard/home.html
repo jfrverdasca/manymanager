@@ -45,9 +45,56 @@
                         yAxes: [{
                             ticks: {min: 0}
                         }]
+                    },
+                    legend: {
+                        onClick: function (event, legendItem) {
+                            // hide clicked dataset and update chart
+                            spent_history_chart.getDatasetMeta(legendItem.datasetIndex).hidden = !legendItem.hidden;
+                            spent_history_chart.update();
+
+                            $('#spent_average').text(spentAverageVisibleDatasets());
+                            /*let n = 1;
+                            let average = null;
+                            $(spent_history_chart.data.datasets).each(function (i, e) {
+                                if (spent_history_chart.getDatasetMeta(i).hidden)
+                                    return;
+
+                                e.data.reduce(function (_, a) {
+                                    if (average === null) {
+                                        average = a;
+                                    } else {
+                                        n += 1;
+                                        average = average + ((a - average) / n);
+                                    }
+
+                                    return average
+                                }, 0);
+
+                                $('#spent_average').text(average);
+                            });*/
+                        }
                     }
                 }
             });
+
+            // calculate the average of visible chart datasets
+            function spentAverageVisibleDatasets() {
+                let n = 1, average = null;
+                $(spent_history_chart.data.datasets).each(function (i, e) {
+                    if (spent_history_chart.getDatasetMeta(i).hidden)
+                        return;
+
+                    e.data.reduce(function (_, a) {
+                        if (average === null) {
+                            average = a;
+                        } else {
+                            n += 1;
+                            average = average + ((a - average) / n);
+                        }
+                    }, 0);
+                });
+                return average === null ? 0 : average.toFixed(2);
+            }
 
             function tablesUpdate() {
                 let fromDate = $('#from_date').val();
@@ -130,7 +177,10 @@
                 $.get(`/history-chart/${months}`, function (response) {
                     spent_history_chart.data = response;
                     spent_history_chart.update();
-                })
+
+                }).done(function () {
+                    $('#spent_average').text(spentAverageVisibleDatasets());
+                });
             }
 
             function favoritesUpdate() {
@@ -283,6 +333,11 @@
                 </div>
                 <div class="card-body">
                     <canvas id="spent_history_chart"></canvas>
+                </div>
+                <div style="height: 52px;" class="card-footer">
+                    <div class="h-100 d-flex align-items-center">
+                        <h5 class="m-0">Average expense: <span id="spent_average">0</span></h5>
+                    </div>
                 </div>
             </div>
         </div>
