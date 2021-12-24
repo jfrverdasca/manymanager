@@ -17,6 +17,8 @@
 
     <script>
         $(document).ready(function () {
+            let quick_history_chart_months = $('#history-chart-dropdown').parent().find('.dropdown-item.active').val();
+
             let expenses_categories_chart = new Chart($('#expenses_categories_chart'), {
                 type: 'doughnut',
                 data: {
@@ -53,25 +55,6 @@
                             spent_history_chart.update();
 
                             $('#spent_average').text(spentAverageVisibleDatasets());
-                            /*let n = 1;
-                            let average = null;
-                            $(spent_history_chart.data.datasets).each(function (i, e) {
-                                if (spent_history_chart.getDatasetMeta(i).hidden)
-                                    return;
-
-                                e.data.reduce(function (_, a) {
-                                    if (average === null) {
-                                        average = a;
-                                    } else {
-                                        n += 1;
-                                        average = average + ((a - average) / n);
-                                    }
-
-                                    return average
-                                }, 0);
-
-                                $('#spent_average').text(average);
-                            });*/
                         }
                     }
                 }
@@ -79,21 +62,16 @@
 
             // calculate the average of visible chart datasets
             function spentAverageVisibleDatasets() {
-                let n = 1, average = null;
+                let total = 0;
                 $(spent_history_chart.data.datasets).each(function (i, e) {
                     if (spent_history_chart.getDatasetMeta(i).hidden)
                         return;
 
                     e.data.reduce(function (_, a) {
-                        if (average === null) {
-                            average = a;
-                        } else {
-                            n += 1;
-                            average = average + ((a - average) / n);
-                        }
+                        total += a
                     }, 0);
                 });
-                return average === null ? 0 : average.toFixed(2);
+                return total === 0 ? 0 : (total / quick_history_chart_months).toFixed(2);
             }
 
             function tablesUpdate() {
@@ -172,9 +150,7 @@
             }
 
             function historyChartUpdate() {
-                let months = $('#history-chart-dropdown').parent().find('.dropdown-item.active').val();
-
-                $.get(`/history-chart/${months}`, function (response) {
+                $.get(`/history-chart/${quick_history_chart_months}`, function (response) {
                     spent_history_chart.data = response;
                     spent_history_chart.update();
 
@@ -263,8 +239,10 @@
                     tablesUpdate();
                     expensesCategoriesChartUpdate();
 
-                } else if ($(e.relatedTarget).attr('id') === 'history-chart-dropdown')
+                } else if ($(e.relatedTarget).attr('id') === 'history-chart-dropdown') {
+                    quick_history_chart_months = clickedTarget.val();
                     historyChartUpdate();
+                }
 
             }).on('click', '#expenses_table td button[name="edit"]', function (e) {
                 expenseModal('{{ url_for('dashboard.expense_form_update', expense_id='0') }}'.replace('0', $(this).val()));
