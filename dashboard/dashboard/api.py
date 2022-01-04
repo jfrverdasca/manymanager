@@ -102,8 +102,9 @@ class HistoryChart(Resource):
                              'borderColor': c.color,
                              'backgroundColor': c.color,
                              'fill': False} for c in expenses.with_entities(Category)}
+
         for category_obj, category_sum, date in expenses:
-            month_list_index = date.month - (12 - months) - 1
+            month_list_index = ((date.year - from_date.year) * 12) + (date.month - from_date.month - 1)
             datasets[category_obj.name]['data'][month_list_index] = category_sum
 
         return {'labels': list(map(lambda m: month_name[(m % 12) + 1],
