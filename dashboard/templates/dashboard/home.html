@@ -63,15 +63,21 @@
             // calculate the average of visible chart datasets
             function spentAverageVisibleDatasets() {
                 let total = 0;
+                let datasetsWithData = Array()
+
                 $(spent_history_chart.data.datasets).each(function (i, e) {
                     if (spent_history_chart.getDatasetMeta(i).hidden)
                         return;
 
-                    e.data.reduce(function (_, a) {
-                        total += a
+                    e.data.reduce(function (_, value, i) {
+                        if (value === 0)
+                            return
+
+                        datasetsWithData[i] = true
+                        total += value
                     }, 0);
                 });
-                return total === 0 ? 0 : (total / quick_history_chart_months).toFixed(2);
+                return total === 0 ? 0 : (total / Object.keys(datasetsWithData).length).toFixed(2);
             }
 
             function tablesUpdate() {
