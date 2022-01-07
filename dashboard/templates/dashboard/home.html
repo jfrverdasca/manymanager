@@ -56,9 +56,51 @@
 
                             $('#spent_average').text(spentAverageVisibleDatasets());
                         }
-                    }
+                    },
+                    onClick: spentHistoryChartClick
                 }
             });
+
+            function spentHistoryChartClick(event, array) {
+                // There is another way to get the month number using Date object, but let's keep it simple.
+                const MONTHS = {'January': 1,
+                    'February': 2,
+                    'March': 3,
+                    'April': 4,
+                    'May': 5,
+                    'June': 6,
+                    'July': 7,
+                    'August': 8,
+                    'September': 9,
+                    'October': 10,
+                    'November': 11,
+                    'December': 12};
+
+                let element = spent_history_chart.getElementAtEvent(event);
+                if (!element.length)
+                    return;
+
+                element = element[0]
+
+                let category = spent_history_chart.data.datasets[element._datasetIndex].label
+                let year = new Date().getFullYear();
+                let monthNumber = MONTHS[spent_history_chart.data.labels[element._index]]
+                let lastMonthDay = new Date(year, monthNumber, 0).getDate();
+
+                // calculate selected year
+                for (let i = spent_history_chart.data.labels.length - 1; i >= element._index; i--) {
+                    if (spent_history_chart.data.labels[i] === 'December')
+                        year -= 1;
+                }
+
+                // update interface elements
+                $('#from_date').datepicker('setDate', `1-${monthNumber}-${year}`);
+                $('#to_date').datepicker('setDate', `${lastMonthDay}-${monthNumber}-${year}`)
+                dropdownStateUpdate($('#category-dropdown').parent(), $(`.colored-dropdown-item:contains(${category})`));
+
+                tablesUpdate();
+                expensesCategoriesChartUpdate();
+            }
 
             // calculate the average of visible chart datasets
             function spentAverageVisibleDatasets() {
