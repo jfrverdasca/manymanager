@@ -50,7 +50,9 @@ class ExpensesCategoriesChart(Resource):
 
         if not expenses:
             expenses = \
-                Expense.query.filter(Expense.timestamp >= from_date, Expense.timestamp <= to_date)\
+                Expense.query.filter(Expense.owner == current_user.id,
+                                     Expense.timestamp >= from_date,
+                                     Expense.timestamp <= to_date)\
                 .join(Category, Expense.category_id == Category.id)\
                 .with_entities(Category, func.sum(Expense.value).label('sum')) \
                 .group_by(Category)\
