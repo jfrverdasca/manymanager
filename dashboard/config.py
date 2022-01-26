@@ -17,4 +17,6 @@ class Config:
     MAIL_PASSWORD = getenv('MAIL_PASSWORD')
 
     # custom configurations
+    PASSWORD_TOKEN_EXPIRATION_SECONDS = 1800  # 30 minutes
+    SHARE_TOKEN_EXPIRATION_SECONDS = 172800  # 24 hours
     DATETIME_FORMAT = getenv('DATETIME_FORMAT', '%d-%m-%Y %H:%M:%S')

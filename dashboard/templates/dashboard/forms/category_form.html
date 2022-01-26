@@ -1,26 +1,22 @@
 <script>
     $(document).ready(function () {
-        function colorUpdate(color) {
-            $('#modal .dropdown-toggle')
-                .css('color', '#fff')
-                .css('background-color', color)
-                .css('border-color', color);
-
+        function colorInputDropdownStateUpdate(color) {
             $('#color').val(color);
+            $('#colorDropdownButton').css({
+                'color': '#fff',
+                'background-color': color,
+                'border-color': color
+            });
         }
 
         $(function () {
-            colorUpdate($('#color').val());
+            colorInputDropdownStateUpdate($('#color').keyup(function () {
+                colorInputDropdownStateUpdate($(this).val());
+            }).val());
         })
 
-        $(document).on('hide.bs.dropdown', '#modal .dropdown-toggle', function (e) {
-            let selectedElement = $(e.clickEvent.target, this)
-
-            if (selectedElement.hasClass('color-dot'))
-                colorUpdate(selectedElement.css('--bg-color'));
-
-        }).on('keyup', '#color', function () {
-            colorUpdate($(this).val());
+        $('.color-dot').click(function () {
+            colorInputDropdownStateUpdate($(this).val());
         });
     });
 </script>
@@ -28,7 +24,7 @@
     <div class="card-header">
         <div class="row justify-content-between">
             <div class="col-10">
-                <h3>Create category</h3>
+                <h3>Create expense</h3>
             </div>
             <div class="col-2 text-end">
                 <button type="button" class="btn-close p-2" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -57,23 +53,6 @@
             </div>
             <div class="row justify-content-start align-items-center mt-1">
                 <div class="col-3">
-                    {{ form.description.label }}
-                </div>
-                <div class="col-6">
-                    {% if form.description.errors %}
-                        {{ form.description(class="form-control is-invalid") }}
-                        <div class="invalid-feedback">
-                            {% for error in form.description.errors %}
-                                <small>{{ error }}</small>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        {{ form.description(class="form-control") }}
-                    {% endif %}
-                </div>
-            </div>
-            <div class="row justify-content-start align-items-center mt-1">
-                <div class="col-3">
                     {{ form.limit.label }}
                 </div>
                 <div class="col-6">
@@ -97,9 +76,87 @@
                     {% if form.color.errors %}
                         <div class="input-group">
                             {{ form.color(class="form-control is-invalid") }}
-                            <span class="input-group-text">
-                                <span class="color-dot"></span>
-                            </span>
+                            <button id="colorDropdownButton" class="btn btn-primary dropdown-toggle border-danger border-start-0 rounded-end" type="button" data-bs-toggle="dropdown" aria-expanded="false">Color</button>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <div class="row ms-1">
+                                    <div class="col-1">
+                                        <button style="background-color: #6ea8fe;" class="color-dot p-0" type="button" value="#6ea8fe"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #a98eda;" class="color-dot p-0" type="button" value="#a98eda"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #e685b5;" class="color-dot p-0" type="button" value="#e685b5"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #ea868f;" class="color-dot p-0" type="button" value="#ea868f"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #feb272;" class="color-dot p-0" type="button" value="#feb272"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #ffda6a;" class="color-dot p-0" type="button" value="#ffda6a"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #75b798;" class="color-dot p-0" type="button" value="#75b798"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #dee2e6;" class="color-dot p-0" type="button" value="#dee2e6"></button>
+                                    </div>
+                                </div>
+                                <div class="row ms-1">
+                                    <div class="col-1">
+                                        <button style="background-color: #0d6efd;" class="color-dot p-0" type="button" value="#0d6efd"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #6f42c1;" class="color-dot p-0" type="button" value="#6f42c1"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #d63384;" class="color-dot p-0" type="button" value="#d63384"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #dc3545;" class="color-dot p-0" type="button" value="#dc3545"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #fd7e14;" class="color-dot p-0" type="button" value="#fd7e14"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #ffc107;" class="color-dot p-0" type="button" value="#ffc107"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #198754;" class="color-dot p-0" type="button" value="#198754"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #adb5bd;" class="color-dot p-0" type="button" value="#adb5bd"></button>
+                                    </div>
+                                </div>
+                                <div class="row ms-1">
+                                    <div class="col-1">
+                                        <button style="background-color: #084298;" class="color-dot p-0" type="button" value="#084298"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #432874;" class="color-dot p-0" type="button" value="#432874"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #801f4f;" class="color-dot p-0" type="button" value="#801f4f"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #842029;" class="color-dot p-0" type="button" value="#842029"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #984c0c;" class="color-dot p-0" type="button" value="#984c0c"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #997404;" class="color-dot p-0" type="button" value="#997404"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #0f5132;" class="color-dot p-0" type="button" value="#0f5132"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #495057;" class="color-dot p-0" type="button" value="#495057"></button>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="invalid-feedback">
                                 {% for error in form.color.errors %}
                                     <small>{{ error }}</small>
@@ -109,84 +166,84 @@
                     {% else %}
                         <div class="input-group">
                             {{ form.color(class="form-control") }}
-                            <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Color</button>
+                            <button id="colorDropdownButton" class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Color</button>
                             <div class="dropdown-menu dropdown-menu-end">
                                 <div class="row ms-1">
                                     <div class="col-1">
-                                        <a style="--bg-color: #6ea8fe;" class="color-dot" type="button"></a>
+                                        <button style="background-color: #6ea8fe;" class="color-dot p-0" type="button" value="#6ea8fe"></button>
                                     </div>
                                     <div class="col-1">
-                                        <a style="--bg-color: #a98eda;" class="color-dot" type="button"></a>
+                                        <button style="background-color: #a98eda;" class="color-dot p-0" type="button" value="#a98eda"></button>
                                     </div>
                                     <div class="col-1">
-                                        <a style="--bg-color: #e685b5;" class="color-dot" type="button"></a>
+                                        <button style="background-color: #e685b5;" class="color-dot p-0" type="button" value="#e685b5"></button>
                                     </div>
                                     <div class="col-1">
-                                        <a style="--bg-color: #ea868f;" class="color-dot" type="button"></a>
+                                        <button style="background-color: #ea868f;" class="color-dot p-0" type="button" value="#ea868f"></button>
                                     </div>
                                     <div class="col-1">
-                                        <a style="--bg-color: #feb272;" class="color-dot" type="button"></a>
+                                        <button style="background-color: #feb272;" class="color-dot p-0" type="button" value="#feb272"></button>
                                     </div>
                                     <div class="col-1">
-                                        <a style="--bg-color: #ffda6a;" class="color-dot" type="button"></a>
+                                        <button style="background-color: #ffda6a;" class="color-dot p-0" type="button" value="#ffda6a"></button>
                                     </div>
                                     <div class="col-1">
-                                        <a style="--bg-color: #75b798;" class="color-dot" type="button"></a>
+                                        <button style="background-color: #75b798;" class="color-dot p-0" type="button" value="#75b798"></button>
                                     </div>
                                     <div class="col-1">
-                                        <a style="--bg-color: #dee2e6;" class="color-dot" type="button"></a>
-                                    </div>
-                                </div>
-                                <div class="row ms-1">
-                                    <div class="col-1">
-                                        <a style="--bg-color: #0d6efd;" class="color-dot" type="button"></a>
-                                    </div>
-                                    <div class="col-1">
-                                        <a style="--bg-color: #6f42c1;" class="color-dot" type="button"></a>
-                                    </div>
-                                    <div class="col-1">
-                                        <a style="--bg-color: #d63384;" class="color-dot" type="button"></a>
-                                    </div>
-                                    <div class="col-1">
-                                        <a style="--bg-color: #dc3545;" class="color-dot" type="button"></a>
-                                    </div>
-                                    <div class="col-1">
-                                        <a style="--bg-color: #fd7e14;" class="color-dot" type="button"></a>
-                                    </div>
-                                    <div class="col-1">
-                                        <a style="--bg-color: #ffc107;" class="color-dot" type="button"></a>
-                                    </div>
-                                    <div class="col-1">
-                                        <a style="--bg-color: #198754;" class="color-dot" type="button"></a>
-                                    </div>
-                                    <div class="col-1">
-                                        <a style="--bg-color: #adb5bd;" class="color-dot" type="button"></a>
+                                        <button style="background-color: #dee2e6;" class="color-dot p-0" type="button" value="#dee2e6"></button>
                                     </div>
                                 </div>
                                 <div class="row ms-1">
                                     <div class="col-1">
-                                        <a style="--bg-color: #084298;" class="color-dot" type="button"></a>
+                                        <button style="background-color: #0d6efd;" class="color-dot p-0" type="button" value="#0d6efd"></button>
                                     </div>
                                     <div class="col-1">
-                                        <a style="--bg-color: #432874;" class="color-dot" type="button"></a>
+                                        <button style="background-color: #6f42c1;" class="color-dot p-0" type="button" value="#6f42c1"></button>
                                     </div>
                                     <div class="col-1">
-                                        <a style="--bg-color: #801f4f;" class="color-dot" type="button"></a>
+                                        <button style="background-color: #d63384;" class="color-dot p-0" type="button" value="#d63384"></button>
                                     </div>
                                     <div class="col-1">
-                                        <a style="--bg-color: #842029;" class="color-dot" type="button"></a>
+                                        <button style="background-color: #dc3545;" class="color-dot p-0" type="button" value="#dc3545"></button>
                                     </div>
                                     <div class="col-1">
-                                        <a style="--bg-color: #984c0c;" class="color-dot" type="button"></a>
+                                        <button style="background-color: #fd7e14;" class="color-dot p-0" type="button" value="#fd7e14"></button>
                                     </div>
                                     <div class="col-1">
-                                        <a style="--bg-color: #997404;" class="color-dot" type="button"></a>
+                                        <button style="background-color: #ffc107;" class="color-dot p-0" type="button" value="#ffc107"></button>
                                     </div>
                                     <div class="col-1">
-                                        <a style="--bg-color: #0f5132;" class="color-dot" type="button"></a>
+                                        <button style="background-color: #198754;" class="color-dot p-0" type="button" value="#198754"></button>
                                     </div>
                                     <div class="col-1">
-                                        <a style="--bg-color: #495057;" class="color-dot" type="button"></a>
+                                        <button style="background-color: #adb5bd;" class="color-dot p-0" type="button" value="#adb5bd"></button>
+                                    </div>
+                                </div>
+                                <div class="row ms-1">
+                                    <div class="col-1">
+                                        <button style="background-color: #084298;" class="color-dot p-0" type="button" value="#084298"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #432874;" class="color-dot p-0" type="button" value="#432874"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #801f4f;" class="color-dot p-0" type="button" value="#801f4f"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #842029;" class="color-dot p-0" type="button" value="#842029"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #984c0c;" class="color-dot p-0" type="button" value="#984c0c"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #997404;" class="color-dot p-0" type="button" value="#997404"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #0f5132;" class="color-dot p-0" type="button" value="#0f5132"></button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button style="background-color: #495057;" class="color-dot p-0" type="button" value="#495057"></button>
                                     </div>
                                 </div>
                             </div>

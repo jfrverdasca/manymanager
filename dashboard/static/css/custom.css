@@ -1,6 +1,6 @@
 :root {
     --color:#1e2125;
-    --bg-color:#e9ecef;
+    --background-color:#e9ecef;
 }
 
 .color-dot {
@@ -9,7 +9,7 @@
     border: 1px solid rgba(0, 0, 0, 0.25);
     border-radius: 50%;
     display: inline-block;
-    background-color: var(--bg-color);
+    background-color: var(--background-color);
 }
 
 .table-search-input {
@@ -18,7 +18,7 @@
 }
 
 /* based in dropdown-item bootstrap class */
-.colored-dropdown-item {
+.color-dropdown-item {
     display: block;
     width: 100%;
     padding: .25rem 1rem;
@@ -31,17 +31,17 @@
     background-color: transparent;
     border: 0;
 }
-.colored-dropdown-item:hover {
+.color-dropdown-item:hover {
     color: var(--color);
-    background-color: var(--bg-color);
+    background-color: var(--background-color);
 }
-.colored-dropdown-item.active, .colored-dropdown-item:active{
+.color-dropdown-item.active, .colored-dropdown-item:active{
     color: var(--color);
-    background-color: var(--bg-color);
+    background-color: var(--background-color);
     text-decoration: none;
 }
 
-.category-btn {
+.color-btn {
     display: inline-block;
     font-weight: 400;
     line-height: 1.5;
@@ -53,8 +53,8 @@
     -webkit-user-select: none;
     -moz-user-select: none;
     user-select: none;
-    background-color: var(--bg-color);
-    border: 1px solid var(--bg-color);;
+    background-color: var(--background-color);
+    border: 1px solid var(--background-color);
     padding: .375rem .75rem;
     font-size: 1rem;
     border-radius: .25rem;

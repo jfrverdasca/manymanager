@@ -2,7 +2,9 @@
 {% block header %}
     <!-- custom -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
-    <script type="text/javascript" src="{{ url_for('static', filename='js/utilities.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/dropdown.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/home.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/modal.js') }}"></script>
 
     <!-- jquery ui -->
     <link href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet">
@@ -15,305 +17,6 @@
     <!-- charts -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
 
-    <script>
-        $(document).ready(function () {
-            let quick_history_chart_months = $('#history-chart-dropdown').parent().find('.dropdown-item.active').val();
-
-            let expenses_categories_chart = new Chart($('#expenses_categories_chart'), {
-                type: 'doughnut',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        data: [],
-                        backgroundColor: [],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    cutoutPercentage: 60,
-                    aspectRatio: 1.3,
-                    legend: {display: false}
-                }
-            });
-
-            let spent_history_chart = new Chart($('#spent_history_chart'), {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: []
-                },
-                options: {
-                    scales: {
-                        yAxes: [{
-                            ticks: {min: 0}
-                        }]
-                    },
-                    legend: {
-                        onClick: function (event, legendItem) {
-                            // hide clicked dataset and update chart
-                            spent_history_chart.getDatasetMeta(legendItem.datasetIndex).hidden = !legendItem.hidden;
-                            spent_history_chart.update();
-
-                            $('#spent_average').text(spentAverageVisibleDatasets());
-                        }
-                    },
-                    onClick: spentHistoryChartClick
-                }
-            });
-
-            function spentHistoryChartClick(event, array) {
-                // There is another way to get the month number using Date object, but let's keep it simple.
-                const MONTHS = {'January': 1,
-                    'February': 2,
-                    'March': 3,
-                    'April': 4,
-                    'May': 5,
-                    'June': 6,
-                    'July': 7,
-                    'August': 8,
-                    'September': 9,
-                    'October': 10,
-                    'November': 11,
-                    'December': 12};
-
-                let element = spent_history_chart.getElementAtEvent(event);
-                if (!element.length)
-                    return;
-
-                element = element[0]
-
-                let category = spent_history_chart.data.datasets[element._datasetIndex].label
-                let year = new Date().getFullYear();
-                let monthNumber = MONTHS[spent_history_chart.data.labels[element._index]]
-                let lastMonthDay = new Date(year, monthNumber, 0).getDate();
-
-                // calculate selected year
-                for (let i = spent_history_chart.data.labels.length - 1; i >= element._index; i--) {
-                    if (spent_history_chart.data.labels[i] === 'December')
-                        year -= 1;
-                }
-
-                // update interface elements
-                $('#from_date').datepicker('setDate', `1-${monthNumber}-${year}`);
-                $('#to_date').datepicker('setDate', `${lastMonthDay}-${monthNumber}-${year}`)
-                dropdownStateUpdate($('#category-dropdown').parent(), $(`.colored-dropdown-item:contains(${category})`));
-
-                tablesUpdate();
-                expensesCategoriesChartUpdate();
-            }
-
-            // calculate the average of visible chart datasets
-            function spentAverageVisibleDatasets() {
-                let total = 0;
-                let datasetsWithData = Array()
-
-                $(spent_history_chart.data.datasets).each(function (i, e) {
-                    if (spent_history_chart.getDatasetMeta(i).hidden)
-                        return;
-
-                    e.data.reduce(function (_, value, i) {
-                        if (value === 0)
-                            return
-
-                        datasetsWithData[i] = true
-                        total += value
-                    }, 0);
-                });
-                return total === 0 ? 0 : (total / Object.keys(datasetsWithData).length).toFixed(2);
-            }
-
-            function tablesUpdate() {
-                let fromDate = $('#from_date').val();
-                let toDate = $('#to_date').val();
-                let categoryId = $('#category').val();
-
-                $.get(`/home-tables/${fromDate}/${toDate}/${categoryId}`, function (response) {
-                    $('#expenses_table_area, #categories_balance_table_area').empty();
-                    $('#expenses_table_length_area, #expenses_table_pagination_area, #categories_balance_table_pagination_area').empty()
-
-                    let parsedResponse = $(response);
-                    parsedResponse.filter('#expenses_table').appendTo('#expenses_table_area');
-                    parsedResponse.filter('#categories_balance_table').appendTo('#categories_balance_table_area');
-
-                    let expenses_table = $('#expenses_table').DataTable({
-                        lengthChange: true,
-                        lengthMenu: [[25, 50, 100, -1], [25, 50, 100, 'All']],
-                        order: [[2, 'desc']],
-                        searching: true,
-                        info: false,
-                        sDom: 'tpl',
-                        oLanguage: {sLengthMenu: '_MENU_'},
-                        initComplete: (settings, json) => {
-                            $('#expenses_table_length').appendTo('#expenses_table_length_area');
-                            $('#expenses_table_paginate').addClass('btn-sm p-0').appendTo('#expenses_table_pagination_area');
-                            $('#expenses_table_pagination_area .pagination').addClass('mb-0');
-                        }
-
-                    }).on('draw.dt', function () {
-                        $('#expenses_table_pagination_area .pagination').addClass('mb-0');
-                    });
-
-                    $('#expenses_table_search').keyup(function () {
-                        expenses_table.search($(this).val()).draw();
-                    });
-
-                    let categories_balance_table = $('#categories_balance_table').DataTable({
-                        pageLength: 5,
-                        lengthChange: false,
-                        searching: true,
-                        info: false,
-                        sDom: 'tpl',
-                        initComplete: (settings, json) => {
-                            $('#categories_balance_table_paginate').addClass('btn-sm p-0').appendTo('#categories_balance_table_pagination_area');
-                            $('#categories_balance_table_pagination_area .pagination').addClass('mb-0');
-                        }
-
-                    }).on('draw.dt', function () {
-                        $('#categories_balance_table_pagination_area .pagination').addClass('mb-0');
-                    });
-
-                    $('#categories_balance_table_search').keyup(function () {
-                        categories_balance_table.search($(this).val()).draw();
-                    });
-
-                }).fail(function (xhr, status, error) {
-                    console.log(status, error);
-                });
-            }
-
-            function expensesCategoriesChartUpdate() {
-                let fromDate = $('#from_date').val();
-                let toDate = $('#to_date').val();
-                let categoryId = $('#category').val();
-
-                $.get(`/expense-categories-chart/${fromDate}/${toDate}/${categoryId}`, function (response) {
-                    expenses_categories_chart.data = response
-                    expenses_categories_chart.update();
-
-                    $('#expenses_categories_chart_total').text(response.total)
-
-                }).fail(function (xhr, status, error) {
-                    console.log(status, error);
-                });
-            }
-
-            function historyChartUpdate() {
-                $.get(`/history-chart/${quick_history_chart_months}`, function (response) {
-                    spent_history_chart.data = response;
-                    spent_history_chart.update();
-
-                }).done(function () {
-                    $('#spent_average').text(spentAverageVisibleDatasets());
-                });
-            }
-
-            function favoritesUpdate() {
-                $.get('{{ url_for('dashboard.favorites') }}', function (response) {
-                    $('#favorites_area').html(response);
-
-                    $('#favorites').sortable().disableSelection().on('sortupdate', function (e, ui) {
-                        let orderedItem = $(ui.item);
-                        $.ajax({
-                            url: `/favorite/${orderedItem.val()}`,
-                            method: 'PATCH',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            dateType: 'json',
-                            data: JSON.stringify({'order': orderedItem.index()}),
-                            error: (xhr, status, error) => {console.log(status, error)},
-                            success: () => favoritesUpdate()
-                        });
-                    });
-                });
-            }
-
-            function dropdownStateUpdate(dropdown, selectedElement) {
-                if (!selectedElement.hasClass('dropdown-item') && !selectedElement.hasClass('colored-dropdown-item'))
-                    return;
-
-                let value = selectedElement.val();
-                if (!value)
-                    return;
-
-                $('input[type="hidden"]', dropdown).val(value);
-                $('.dropdown-item.active, .colored-dropdown-item.active', dropdown).removeClass('active');
-                $(`.dropdown-item[value="${value}"], .colored-dropdown-item[value="${value}"]`, dropdown).addClass('active');
-                $('.dropdown-toggle', dropdown).text(selectedElement.text())
-
-                if (selectedElement.hasClass('colored-dropdown-item')) {
-                    $('.dropdown-toggle', dropdown)
-                        .css('color', '#fff')
-                        .css('background-color', selectedElement.css('background-color'))
-                        .css('border-color', selectedElement.css('background-color'));
-                }
-            }
-
-            function expenseModal(url) {
-                modal(url,
-                    function (content) {
-                        $('#date', content).datepicker({dateFormat: 'dd-mm-yy'});
-
-                        let selectedValue = $('.dropdown input[type="hidden"]', content).val();
-                        if (selectedValue)
-                            dropdownStateUpdate($('.dropdown', content),
-                                $('.dropdown .colored-dropdown-item[value=' + selectedValue + ']', content));
-                    },
-                    function () {
-                        tablesUpdate();
-                        favoritesUpdate();
-                        historyChartUpdate();
-                        expensesCategoriesChartUpdate();
-                    });
-            }
-
-            $(function () {
-                $('#from_date, #to_date').datepicker({dateFormat: 'dd-mm-yy'}).change(function () {
-                    tablesUpdate();
-                    expensesCategoriesChartUpdate();
-                });
-
-                tablesUpdate();
-                favoritesUpdate();
-                historyChartUpdate();
-                expensesCategoriesChartUpdate();
-            });
-
-            $(document).on('hide.bs.dropdown', '.dropdown:not(header .dropdown)', function (e) {
-                let clickedTarget = $(e.clickEvent.target, this);
-                dropdownStateUpdate(this, clickedTarget);
-
-                if ($(e.relatedTarget).attr('id') === 'category-dropdown') {
-                    tablesUpdate();
-                    expensesCategoriesChartUpdate();
-
-                } else if ($(e.relatedTarget).attr('id') === 'history-chart-dropdown') {
-                    quick_history_chart_months = clickedTarget.val();
-                    historyChartUpdate();
-                }
-
-            }).on('click', '#expenses_table td button[name="edit"]', function (e) {
-                expenseModal('{{ url_for('dashboard.expense_form_update', expense_id='0') }}'.replace('0', $(this).val()));
-
-            }).on('click', '#expenses_table td button[name="delete"]', function (e) {
-                expenseModal('{{ url_for('dashboard.expense_form_delete', expense_id='0') }}'.replace('0', $(this).val()));
-
-            }).on('click', '#favorites li', function (e) {
-                $.post('{{ url_for('api.expensereplica') }}', `csrf_token={{ csrf_token() }}&id=${$(this).val()}`).done(function () {
-                    tablesUpdate();
-                    expensesCategoriesChartUpdate();
-
-                }).fail(function (xhr, status, error) {
-                    console.log(status, error);
-                });
-            });
-
-            $('#expense_new').click(function () {
-                expenseModal('{{ url_for('dashboard.expense_form_create') }}')
-            });
-        });
-    </script>
-
 {% endblock %}
 {% block content %}
     <div class="row mt-3">
@@ -323,7 +26,22 @@
                     <h3>Favorites</h3>
                 </div>
                 <div class="card-body">
-                    <div id="favorites_area"></div>
+                    <div id="favoritesListArea">
+                        <p class="mb-0">Add items to favorites to add expenses with one click. Select the <b>Favorite</b> option when adding a new expense</p>
+                        <small>Note: Add items whose price is not variable</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h3>Shares approval</h3>
+                </div>
+                <div class="card-body">
+                    <div class="sharesApprovalArea"></div>
                 </div>
             </div>
         </div>
@@ -337,9 +55,9 @@
                             <h3>Quick history</h3>
                         </div>
                         <div class="col-6 d-flex align-items-center justify-content-end">
-                            <div class="dropdown">
-                                <button id="history-chart-dropdown" class="dropdown-toggle btn btn-sm btn-primary" type="button" data-bs-toggle="dropdown" aria-expanded="False">12 months</button>
-                                <ul class="dropdown-menu" aria-labelledby="history-chart-dropdown">
+                            <div id="quickHistoryChartDropdown" class="dropdown">
+                                <button id="quickHistoryChartDropdownButton" class="dropdown-toggle btn btn-sm btn-primary" type="button" data-bs-toggle="dropdown" aria-expanded="false">12 months</button>
+                                <ul class="dropdown-menu" aria-labelledby="quickHistoryChartDropdownButton">
                                     <li>
                                         <button class="dropdown-item" type="button" value="6">6 months</button>
                                     </li>
@@ -358,11 +76,11 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <canvas id="spent_history_chart"></canvas>
+                    <canvas id="quickHistoryChart"></canvas>
                 </div>
                 <div style="height: 52px;" class="card-footer">
-                    <div class="h-100 d-flex align-items-center">
-                        <h5 class="m-0">Average expense: <span id="spent_average">0</span></h5>
+                    <div class="d-flex align-items-center h-100">
+                        <h5 class="m-0">Average expense: <span id="spentAverage">0</span></h5>
                     </div>
                 </div>
             </div>
@@ -373,48 +91,48 @@
             <hr>
         </div>
     </div>
-    <div class="row align-items-end mt-1">
-        <div class="col-md-2">
-            <label for="from_date">From date:</label>
-            <input id="from_date" class="form-control form-control-sm" type="text" value="{{ data.from_date }}" readonly>
+    <div class="row mt-3">
+        <div class="col-6 col-sm-4 col-md-2">
+            <label for="fromDate">From date:</label>
+            <input id="fromDate" class="form-control form-control-sm" type="text" value="{{ data.from_date }}" readonly>
         </div>
-        <div class="col-md-2">
-            <label for="to_date">To date:</label>
-            <input id="to_date" class="form-control form-control-sm" type="text" value="{{ data.to_date }}" readonly>
+        <div class="col-6 col-sm-4 col-md-2">
+            <label for="toDate">To date:</label>
+            <input id="toDate" class="form-control form-control-sm" type="text" value="{{ data.to_date }}" readonly>
         </div>
-        <div class="col-md-auto">
-            <label for="category-dropdown">Category:</label>
-            <div class="dropdown">
-                <button id="category-dropdown" class="dropdown-toggle btn btn-sm btn-primary" type="button" data-bs-toggle="dropdown" aria-expanded="false">All</button>
-                <ul class="dropdown-menu" aria-labelledby="category-dropdown">
+        <div class="col-6 col-sm-2 col-md-4">
+            <label for="categoryDropdown">Category:</label>
+            <div id="categoryDropdown" class="dropdown">
+                <button id="categoryDropdownButton" class="dropdown-toggle btn btn-sm btn-primary" type="button" data-bs-toggle="dropdown" aria-expanded="false">All</button>
+                <ul class="dropdown-menu" aria-labelledby="categoryDropdownButton">
                     <li>
                         <button class="dropdown-item active" type="button" value="0">All</button>
                     </li>
                     {% for category in data.categories %}
-                    <li>
-                        <button class="colored-dropdown-item" style="--bg-color: {{ category.color }}; --color: #fff" type="button" value="{{ category.id }}">{{ category.name }}</button>
-                    </li>
+                        <li>
+                            <button class="color-dropdown-item" style="--background-color: {{ category.color }}; --color: #fff" type="button" value="{{ category.id }}">{{ category.name }}</button>
+                        </li>
                     {% endfor %}
                 </ul>
-                <input id="category" name="category" type="hidden" value="0" autocomplete="off">
+                <input id="categoryDropdownValue" name="category" type="hidden" value="0" autocomplete="off">
             </div>
         </div>
-        <div class="col-md-auto mt-1">
-            <a class="btn btn-sm btn-outline-danger" href="{{ url_for('dashboard.home') }}" type="button">Reset</a>
+        <div class="col-6 col-sm-2 col-md-4 d-flex align-items-end justify-content-end">
+            <a class="btn btn-sm btn-outline-danger" type="button" href="{{ url_for('dashboard.home') }}">Reset</a>
         </div>
     </div>
     <div class="row">
         <div class="col-md-4 mt-3">
-            <div class="card shadow-sm h-100">
+            <div class="card shadow-sm">
                 <div class="card-header">
-                    <h3>Charts</h3>
+                    <h3>Spent by category</h3>
                 </div>
                 <div class="card-body">
-                    <canvas id="expenses_categories_chart"></canvas>
+                    <canvas id="spentByCategoryChart"></canvas>
                 </div>
                 <div style="height: 52px;" class="card-footer">
-                    <div class="h-100 d-flex align-items-center">
-                        <h5 class="m-0">Total spent: <span id="expenses_categories_chart_total">0</span></h5>
+                    <div class="d-flex align-items-center h-100">
+                        <h5 class="m-0">Total spent: <span id="totalSpent">0</span></h5>
                     </div>
                 </div>
             </div>
@@ -427,14 +145,14 @@
                             <h3>Categories balance</h3>
                         </div>
                         <div class="col-6 d-flex align-items-start justify-content-end">
-                            <label for="categories_balance_table_search" hidden></label>
-                            <input id="categories_balance_table_search" class="form-control form-control-sm table-search-input" type="text" placeholder="Search">
+                            <label for="categoriesBalanceTableSearch" hidden></label>
+                            <input id="categoriesBalanceTableSearch" class="form-control form-control-sm table-search-input" type="text" placeholder="Search">
                         </div>
                     </div>
                 </div>
                 <div class="card-body">
                     <div class="container-lg">
-                        <div id="categories_balance_table_area" class="table-responsive-md">
+                        <div id="categoriesBalanceTableArea" class="table-responsive-md">
                             <div class="d-flex align-items-center">
                                 <div class="d-inline">
                                     <div class="spinner-border text-primary" role="status">
@@ -446,9 +164,11 @@
                         </div>
                     </div>
                 </div>
-                <div class="card-footer">
-                    <div class="container d-flex justify-content-end pe-0">
-                        <div id="categories_balance_table_pagination_area"></div>
+                <div style="height: 52px;" class="card-footer">
+                    <div class="row justify-content-end">
+                        <div class="col-4">
+                            <div id="categoriesBalanceTablePaginationArea" class="d-flex justify-content-end"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -462,14 +182,14 @@
                         <div class="col-4">
                             <h3>Expenses</h3>
                         </div>
-                        <div class="col-8">
-                            <div class="row justify-content-end">
-                                <div class="col-sm-auto text-end">
-                                    <div id="expenses_table_length_area"></div>
+                        <div class="col-8 d-flex align-items-start justify-content-end">
+                            <div class="row h-100">
+                                <div class="col-auto">
+                                    <div id="expensesTableLengthArea"></div>
                                 </div>
-                                <div class="col-sm-auto d-flex align-items-start justify-content-end">
-                                    <label for="expenses_table_search" hidden>Search</label>
-                                    <input id="expenses_table_search" class="form-control form-control-sm table-search-input" type="text" placeholder="Search">
+                                <div class="col-auto">
+                                    <label for="expensesTableSearch" hidden></label>
+                                    <input id="expensesTableSearch" class="form-control form-control-sm table-search-input" type="text" placeholder="Search">
                                 </div>
                             </div>
                         </div>
@@ -477,7 +197,7 @@
                 </div>
                 <div class="card-body">
                     <div class="container-lg">
-                        <div id="expenses_table_area" class="table-responsive-md">
+                        <div id="expensesTableArea" class="table-responsive-md">
                             <div class="d-flex align-items-center">
                                 <div class="d-inline">
                                     <div class="spinner-border text-primary" role="status">
@@ -489,25 +209,43 @@
                         </div>
                     </div>
                 </div>
-                <div class="card-footer">
+                <div style="height: 52px;" class="card-footer">
                     <div class="row justify-content-between">
                         <div class="col-2">
-                            <button id="expense_new" class="btn btn-sm btn-primary" type="button">New</button>
+                            <button class="btn btn-sm btn-primary mt-1" type="button" data-bs-toggle="modal" data-bs-target="#modal" value="{{ url_for('dashboard.expense_create_form') }}">New</button>
                         </div>
                         <div class="col-4">
-                            <div id="expenses_table_pagination_area" class="d-flex justify-content-end"></div>
+                            <div id="expensesTablePaginationArea" class="d-flex justify-content-end"></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <!-- popups -->
-    <div id="modal" class="modal fade" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="modal_title" aria-hidden="true">
+    <!-- modal -->
+    <div id="modal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content border-0 shadow-lg">
-                <h3 id="modal_title" class="d-none"></h3>
-                <div id="modal_content_area" class="modal-body p-0"></div>
+                <div id="loadingAnimation" class="container py-3">
+                    <div class="row pt-5">
+                        <div class="col-12 text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row pb-5">
+                        <div class="col-12 text-center">
+                            <small>Loading content...</small>
+                        </div>
+                    </div>
+                    <div class="row pt-5">
+                        <div class="col-12 text-center">
+                            <button class="btn btn-sm btn-primary" type="button" data-bs-dismiss="modal">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="modalContentArea" style="display: none;" class="modal-body p-0" ></div>
             </div>
         </div>
     </div>

@@ -52,7 +52,7 @@ def create_app(config_class=Config):
     app.url_map.converters['date'] = DateConverter
 
     # api/blueprints
-    from dashboard.dashboard.api import api_blueprint
+    from dashboard.rest.routes import api_blueprint
     api.init_app(api_blueprint)
     app.register_blueprint(api_blueprint)
 

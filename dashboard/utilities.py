@@ -1,4 +1,5 @@
 from flask_mail import Message
+from smtplib import SMTPException
 from dashboard import mail
 
 
@@ -12,4 +13,9 @@ def send_email(recipients, subject, body, is_html_body=False):
     else:
         message = Message(subject, recipients=recipients, body=body, sender='noreply@manymanager.com')
 
-    mail.send(message)
+    try:
+        mail.connect()
+        mail.send(message)
+
+    except SMTPException as smtp_error:
+        print(smtp_error)

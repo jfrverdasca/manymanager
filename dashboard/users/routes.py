@@ -1,7 +1,8 @@
 import logging
 
-from flask import Blueprint, render_template, redirect, url_for, request, flash, session
+from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import current_user, login_user, logout_user
+from sqlalchemy import or_
 from werkzeug.security import generate_password_hash, check_password_hash
 from .forms import RegisterForm, LoginForm, RequestPasswordResetForm, PasswordResetForm
 from dashboard.utilities import send_email
@@ -19,7 +20,9 @@ def register():
 
     form = RegisterForm()
     if form.validate_on_submit():
-        user = User(email=form.email.data, password=generate_password_hash(form.password.data))
+        user = User(email=form.email.data,
+                    username=form.username.data,
+                    password=generate_password_hash(form.password.data))
         db.session.add(user)
         db.session.commit()
 
@@ -36,7 +39,8 @@ def login():
 
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
+        user = User.query.filter(or_(User.email == form.email_username.data,
+                                     User.username == form.email_username.data)).first()
         if user and check_password_hash(user.password, form.password.data):
             login_user(user, remember=form.remember.data)
 

@@ -39,7 +39,7 @@
                         <ul class="dropdown-menu" aria-labelledby="expense_category_dropdown">
                             {% for choice in form.category.choices %}
                                 <li>
-                                    <button class="colored-dropdown-item" style="--bg-color: {{ choice.color }}; --color: #fff" type="button" value="{{ choice.id }}">{{ choice.name }}</button>
+                                    <button class="color-dropdown-item" style="--background-color: {{ choice.color }}; --color: #fff" type="button" value="{{ choice.id }}">{{ choice.name }}</button>
                                 </li>
                             {% endfor %}
                         </ul>

@@ -1,11 +1,11 @@
 from flask_wtf import FlaskForm
-from wtforms import validators, widgets, DateField, TimeField, SelectField, StringField, FloatField, BooleanField, SubmitField
-from datetime import datetime
+from wtforms import validators, widgets, DateField, TimeField, \
+    SelectField, StringField, FloatField, BooleanField, SubmitField
 
 
 class ExpenseForm(FlaskForm):
 
-    description = StringField('Description', validators=[validators.DataRequired(), validators.Length(max=500)])
+    description = StringField('Description', validators=[validators.DataRequired(), validators.Length(max=50)])
     category = SelectField('Category', validators=[validators.DataRequired()])
     date = DateField('Date', widget=widgets.TextInput(), format='%d-%m-%Y',
                      validators=[validators.DataRequired()])  # datetime widget does not work properly in some browsers
@@ -18,8 +18,7 @@ class ExpenseForm(FlaskForm):
 class CategoryForm(FlaskForm):
 
     name = StringField('Name', validators=[validators.DataRequired(), validators.Length(max=50)])
-    description = StringField('Description', widget=widgets.TextArea(), validators=[validators.Length(max=500)])
-    limit = FloatField('Limit', default=0, validators=[validators.DataRequired(), validators.NumberRange(min=0)])
+    limit = FloatField('Limit', default=0, validators=[validators.InputRequired(), validators.NumberRange(min=0)])
     color = StringField('Color', validators=[validators.DataRequired(), validators.Length(min=7, max=7)])
     submit = SubmitField('Save')
 

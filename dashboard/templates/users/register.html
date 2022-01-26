@@ -11,6 +11,23 @@
                     <div class="card-body">
                         <div class="row align-items-center mb-1">
                             <div class="col-lg-5">
+                                {{ form.username.label }}
+                            </div>
+                            <div class="col-lg-7">
+                                {% if form.username.errors %}
+                                    {{ form.username(class="form-control is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.username.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.username(class="form-control") }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="row align-items-center mb-1">
+                            <div class="col-lg-5">
                                 {{ form.email.label }}:
                             </div>
                             <div class="col-lg-7">
