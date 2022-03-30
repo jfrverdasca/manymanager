@@ -250,7 +250,7 @@ $(document).ready(function () {
     });
 
     $('#modalContentArea').change(function () {
-        $('#date', this).datepicker({dateFormat: 'dd-mm-yy'});
+        $('#date').datepicker({dateFormat: 'dd-mm-yy'});
 
         let categoryId= $('input[name="category"]', this).val();
         if (categoryId !== '0')

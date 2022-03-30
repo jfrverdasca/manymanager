@@ -17,6 +17,9 @@ def expenses_categories_balance_tables(from_date, to_date, category_id):
     if not current_user.is_authenticated:
         abort(401)
 
+    # add hour information to to date
+    to_date = to_date.replace(hour=23, minute=59, second=59)
+
     months_between_dates = ((to_date.year - from_date.year) * 12 + to_date.month - from_date.month) + 1
 
     if category_id:
@@ -308,6 +311,8 @@ def share_form_create():
 def share_activate(token):
     if not current_user.is_authenticated:
         return redirect(url_for('auth.login'))
+
+
 
     # share = Share.check_share_token(token)
     # if not share:

@@ -34,6 +34,8 @@ class ExpensesCategoriesChart(Resource):
         if not current_user.is_authenticated:
             abort(401, message='Authentication required')
 
+        to_date = to_date.replace(hour=23, minute=59, second=59)
+
         if category_id:
             expenses = Expense.query.filter(Expense.user == current_user,
                                             Expense.timestamp >= from_date,
