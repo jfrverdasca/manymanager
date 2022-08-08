@@ -81,15 +81,16 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <div id="categoriesTableArea" class="table-responsive-md">
-                        <div class="d-flex align-items-center">
-                            <div class="d-inline">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                            </div>
-                            <h5 class="d-inline ms-3 mb-0">Loading...</h5>
-                        </div>
+                    <div class="table-responsive-md">
+                        <table id="categoriesTable" class="table w-100">
+                            <thead>
+                                <tr>
+                                    <td>Name</td>
+                                    <td>Limit</td>
+                                    <td>Options</td>
+                                </tr>
+                            </thead>
+                        </table>
                     </div>
                 </div>
                 <div class="card-footer">
@@ -119,14 +120,16 @@
                 </div>
                 <div class="card-body">
                     <div id="favoritesTableArea" class="table-responsive-md">
-                        <div class="d-flex align-items-center">
-                            <div class="d-inline">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                            </div>
-                            <h5 class="d-inline ms-3 mb-0">Loading...</h5>
-                        </div>
+                        <table id="favoritesTable" class="table w-100">
+                            <thead>
+                                <tr>
+                                    <td>Description</td>
+                                    <td>Value</td>
+                                    <td>Options</td>
+                                    <td hidden>Favorite Order</td> <!-- just for column ordering -->
+                                </tr>
+                            </thead>
+                        </table>
                     </div>
                 </div>
                 <div style="height: 52px;" class="card-footer">

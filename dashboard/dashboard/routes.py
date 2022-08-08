@@ -4,55 +4,13 @@ from sqlalchemy.sql import func
 from datetime import datetime
 from calendar import monthrange
 from dashboard.models import db, User, Expense, Category
-from dashboard.utilities import send_email
+from dashboard.utilities import get_expenses_by_date_interval_category
 from .forms import ExpenseForm, CategoryForm, DeleteForm
 
 dashboard_blueprint = Blueprint('dashboard', __name__)
 
 
 # ajax
-@dashboard_blueprint.route('/expenses-categories-balance-tables/<date:from_date>/<date:to_date>/<int:category_id>',
-                           methods=['GET'])
-def expenses_categories_balance_tables(from_date, to_date, category_id):
-    if not current_user.is_authenticated:
-        abort(401)
-
-    # add hour information to to date
-    to_date = to_date.replace(hour=23, minute=59, second=59)
-
-    months_between_dates = ((to_date.year - from_date.year) * 12 + to_date.month - from_date.month) + 1
-
-    if category_id:
-        expenses = Expense.query.filter(Expense.user == current_user,
-                                        Expense.timestamp >= from_date,
-                                        Expense.timestamp <= to_date,
-                                        Expense.category_id == category_id,
-                                        Expense.accepted)
-
-    else:
-        expenses = Expense.query.filter(Expense.user == current_user,
-                                        Expense.timestamp >= from_date,
-                                        Expense.timestamp <= to_date,
-                                        Expense.accepted)
-
-    data = {'expenses': expenses,
-            'categories': list()}
-
-    expenses_sum_by_category = expenses \
-        .join(Category, Expense.category_id == Category.id) \
-        .with_entities(Category, func.sum(Expense.value).label('sum')) \
-        .group_by(Category.id)
-    for category, expenses_sum in expenses_sum_by_category:
-        months_category_limit = category.limit * months_between_dates
-
-        data['categories'].append({'category': category,
-                                   'limit': months_category_limit,
-                                   'balance': round(months_category_limit - expenses_sum, 2),
-                                   'spent': round(expenses_sum, 2)})
-
-    return render_template('dashboard/ajax/expenses_categories_balance_tables.html', data=data)
-
-
 @dashboard_blueprint.route('/favorites-list', methods=['GET'])
 def favorites_list():
     if not current_user.is_authenticated:
@@ -63,16 +21,6 @@ def favorites_list():
                            .join(Category, Expense.category_id == Category.id)
                            .order_by(Expense.favorite_sort)
                            .all())
-
-
-@dashboard_blueprint.route('/categories_favorites_tables', methods=['GET'])
-def categories_favorites_tables():
-    if not current_user.is_authenticated:
-        abort(401)
-
-    return render_template('dashboard/ajax/categories_favorites_tables.html', data={
-        'categories': Category.query.filter_by(user=current_user),
-        'favorites': Expense.query.filter_by(user=current_user, is_favorite=True)})
 
 
 # popups

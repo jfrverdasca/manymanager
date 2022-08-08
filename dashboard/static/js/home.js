@@ -1,4 +1,5 @@
 $(document).ready(function () {
+    // charts
     let quickHistoryChartMonths = $('#quickHistoryChartDropdown').find('.dropdown-item.active').val();
 
     let spentByCategoryChart = new Chart($('#spentByCategoryChart'), {
@@ -37,7 +38,112 @@ $(document).ready(function () {
             onClick: quickHistoryChartClick
         }
     });
-    
+
+    // tables
+    let expensesTable = $('#expensesTable').DataTable({
+        lengthChange: true,
+        lengthMenu: [[25, 50, 100, -1], [25, 50, 100, 'All']],
+        order: [[2, 'desc']],
+        searching: true,
+        info: false,
+        sDom: 'tpl',
+        oLanguage: {sLengthMenu: '_MENU_'},
+        processing: true,
+        serverSide: true,
+        deferLoading: 0,
+        // ajax: set in update function
+        columnDefs: [{
+            targets: 1,
+            data: null,
+            render: function (data, type, row, meta) {
+                return `<span style=\"color: ${data[1].color}\">${data[1].name}</span>`
+            }
+        }, {
+            targets: 4,
+            searchable: false,
+            orderable: false,
+            data: null,
+            render: function (data, type, row, meta) {
+                return `<button class="btn btn-sm text-primary text-decoration-none shadow-none p-0" 
+                        type="button" data-bs-toggle="modal" data-bs-target="#modal" 
+                        value="/expense/${data[4]}/update">
+                            <i class="bi-pencil" style="font-size: 18px;"></i>
+                        </button>
+                        <button class="btn btn-sm text-danger text-decoration-none shadow-none p-0 ms-2" 
+                        type="button" data-bs-toggle="modal" data-bs-target="#modal" 
+                        value="/expense/${data[4]}/delete">
+                            <i class="bi-trash" style="font-size: 18px;"></i>
+                        </button>`
+            }
+        }],
+        initComplete: (settings, json) => {
+            $('#expensesTable_length').appendTo('#expensesTableLengthArea');
+            $('#expensesTable_paginate').addClass('btn-sm p-0').appendTo('#expensesTablePaginationArea');
+            $('#expensesTablePaginationArea .pagination').addClass('mb-0');
+        }
+
+    }).on('draw.dt', function () {
+        $('#expensesTablePaginationArea .pagination').addClass('mb-0');
+    });
+
+    $('#expensesTableSearch').keyup(function () {
+        expensesTable.search($(this).val()).draw();
+    });
+
+    let categoriesBalanceTable = $('#categoriesBalanceTable').DataTable({
+        pageLength: 5,
+        lengthChange: false,
+        order: [[3, 'asc']],
+        searching: true,
+        info: false,
+        sDom: 'tpl',
+        processing: true,
+        serverSide: true,
+        deferLoading: 0,
+        // ajax: set in update function
+        columnDefs: [{
+            targets: 0,
+            data: null,
+            render: function (data, type, row, meta) {
+                return `<span style=\"color: ${data[0].color}\">${data[0].name}</span>`
+            }
+        }, {
+            targets: 2,
+            data: null,
+            render: function (data, type, row, meta) {
+                let column_value = data[2]
+                return (column_value < 0) ? `<span class=\"text-danger\">${column_value}</span>` : `<span class=\"text-primary\">${column_value}</span>`
+            }
+        }, {
+            targets: 3,
+            data: null,
+            render: function (data, type, row, meta) {
+                return `<span class=\"text-danger\">${data[3]}</span>`
+            }
+        }],
+        initComplete: (settings, json) => {
+            $('#categoriesBalanceTable_paginate').addClass('btn-sm p-0').appendTo('#categoriesBalanceTablePaginationArea');
+            $('#categoriesBalanceTablePaginationArea .pagination').addClass('mb-0');
+        }
+
+    }).on('draw.dt', function () {
+        $('#categoriesBalanceTablePaginationArea .pagination').addClass('mb-0');
+    });
+
+    $('#categoriesBalanceTableSearch').keyup(function () {
+        categoriesBalanceTable.search($(this).val()).draw();
+    });
+
+    // others
+    function expensesCategoryBalanceTablesUpdate() {
+        let fromDate = $('#fromDate').val();
+        let toDate = $('#toDate').val();
+        let categoryId = $('#categoryDropdownValue').val();
+
+        categoriesBalanceTable.ajax.url(`../categories_balance_table/${fromDate}/${toDate}/${categoryId}/`).draw();
+        expensesTable.ajax.url(`../expenses_table/${fromDate}/${toDate}/${categoryId}/`).draw();
+    }
+
     function spentAverageVisibleDatasets() {
         let total = 0;
         let datasetsWithData = Array();
@@ -90,73 +196,14 @@ $(document).ready(function () {
         }
 
         // update interface elements
-        $('#fromDate').datepicker('setDate', `1-${monthNumber}-${year}`);
-        $('#toDate').datepicker('setDate', `${lastMonthDay}-${monthNumber}-${year}`);
+        $('#fromDate').datepicker('setDate', `1-${monthNumber}-${year}`).val();
+        $('#toDate').datepicker('setDate', `${lastMonthDay}-${monthNumber}-${year}`).val();
 
         let dropdown = $('#categoryDropdown');
         dropdownStateUpdate(dropdown, $(`.color-dropdown-item:contains(${category}):first`));
 
         expensesCategoryBalanceTablesUpdate();
         spentByCategoryChartUpdate();
-
-    }
-
-    function expensesCategoryBalanceTablesUpdate() {
-        let fromDate = $('#fromDate').val();
-        let toDate = $('#toDate').val();
-        let categoryId = $('#categoryDropdownValue').val();
-
-        $.get(`/expenses-categories-balance-tables/${fromDate}/${toDate}/${categoryId}`, function (response) {
-            $('#expensesTableArea, #categoriesBalanceTableArea').empty();
-            $('#expensesTableLengthArea, #expensesTablePaginationArea, #categoriesBalanceTablePaginationArea').empty()
-
-            let parsedResponse = $(response);
-            parsedResponse.filter('#expensesTable').appendTo('#expensesTableArea');
-            parsedResponse.filter('#categoriesBalanceTable').appendTo('#categoriesBalanceTableArea');
-
-            let expensesTable = $('#expensesTable').DataTable({
-                lengthChange: true,
-                lengthMenu: [[25, 50, 100, -1], [25, 50, 100, 'All']],
-                order: [[2, 'desc']],
-                searching: true,
-                info: false,
-                sDom: 'tpl',
-                oLanguage: {sLengthMenu: '_MENU_'},
-                initComplete: (settings, json) => {
-                    $('#expensesTable_length').appendTo('#expensesTableLengthArea');
-                    $('#expensesTable_paginate').addClass('btn-sm p-0').appendTo('#expensesTablePaginationArea');
-                    $('#expensesTablePaginationArea .pagination').addClass('mb-0');
-                }
-            }).on('draw.dt', function () {
-                $('#expensesTablePaginationArea .pagination').addClass('mb-0');
-            });
-
-            $('#expensesTableSearch').keyup(function () {
-                expensesTable.search($(this).val()).draw();
-            });
-
-            let categoriesBalanceTable = $('#categoriesBalanceTable').DataTable({
-                pageLength: 5,
-                lengthChange: false,
-                searching: true,
-                info: false,
-                sDom: 'tpl',
-                initComplete: (settings, json) => {
-                    $('#categoriesBalanceTable_paginate').addClass('btn-sm p-0').appendTo('#categoriesBalanceTablePaginationArea');
-                    $('#categoriesBalanceTablePaginationArea .pagination').addClass('mb-0');
-                }
-
-            }).on('draw.dt', function () {
-                $('#categoriesBalanceTablePaginationArea .pagination').addClass('mb-0');
-            });
-
-            $('#categoriesBalanceTableSearch').keyup(function () {
-                categoriesBalanceTable.search($(this).val()).draw();
-            });
-
-        }).fail(function (xhr, status, error) {
-            console.log(status, error, xhr.responseText);
-        });
     }
 
     function favoritesListUpdate() {
@@ -229,6 +276,8 @@ $(document).ready(function () {
                 break;
 
             case 'categoryDropdown':
+                categoryId = $('#categoryDropdownValue').val()
+
                 expensesCategoryBalanceTablesUpdate();
                 spentByCategoryChartUpdate();
                 break;
