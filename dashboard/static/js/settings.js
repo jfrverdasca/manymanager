@@ -9,7 +9,7 @@ $(document).ready(function () {
         sDom: 'tpl',
         processing: true,
         serverSide: true,
-        deferLoading: 0,
+        deferLoading: false,
         ajax: '../categories_table/',
         columnDefs: [{
             targets: 0,
@@ -56,7 +56,7 @@ $(document).ready(function () {
         sDom: 'tpl',
         processing: true,
         serverSide: true,
-        deferLoading: 0,
+        deferLoading: false,
         ajax: '../favorites_table',
         columnDefs: [{
             targets: 0,
@@ -77,6 +77,7 @@ $(document).ready(function () {
         }, {
             targets: 3,
             data: null,
+            searchable: false,
             createdCell: function (td, cellData, rowData, row, col) {
                 $(td).attr("hidden",true);
             }

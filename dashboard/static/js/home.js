@@ -40,56 +40,6 @@ $(document).ready(function () {
     });
 
     // tables
-    let expensesTable = $('#expensesTable').DataTable({
-        lengthChange: true,
-        lengthMenu: [[25, 50, 100, -1], [25, 50, 100, 'All']],
-        order: [[2, 'desc']],
-        searching: true,
-        info: false,
-        sDom: 'tpl',
-        oLanguage: {sLengthMenu: '_MENU_'},
-        processing: true,
-        serverSide: true,
-        deferLoading: 0,
-        // ajax: set in update function
-        columnDefs: [{
-            targets: 1,
-            data: null,
-            render: function (data, type, row, meta) {
-                return `<span style=\"color: ${data[1].color}\">${data[1].name}</span>`
-            }
-        }, {
-            targets: 4,
-            searchable: false,
-            orderable: false,
-            data: null,
-            render: function (data, type, row, meta) {
-                return `<button class="btn btn-sm text-primary text-decoration-none shadow-none p-0" 
-                        type="button" data-bs-toggle="modal" data-bs-target="#modal" 
-                        value="/expense/${data[4]}/update">
-                            <i class="bi-pencil" style="font-size: 18px;"></i>
-                        </button>
-                        <button class="btn btn-sm text-danger text-decoration-none shadow-none p-0 ms-2" 
-                        type="button" data-bs-toggle="modal" data-bs-target="#modal" 
-                        value="/expense/${data[4]}/delete">
-                            <i class="bi-trash" style="font-size: 18px;"></i>
-                        </button>`
-            }
-        }],
-        initComplete: (settings, json) => {
-            $('#expensesTable_length').appendTo('#expensesTableLengthArea');
-            $('#expensesTable_paginate').addClass('btn-sm p-0').appendTo('#expensesTablePaginationArea');
-            $('#expensesTablePaginationArea .pagination').addClass('mb-0');
-        }
-
-    }).on('draw.dt', function () {
-        $('#expensesTablePaginationArea .pagination').addClass('mb-0');
-    });
-
-    $('#expensesTableSearch').keyup(function () {
-        expensesTable.search($(this).val()).draw();
-    });
-
     let categoriesBalanceTable = $('#categoriesBalanceTable').DataTable({
         pageLength: 5,
         lengthChange: false,
@@ -99,26 +49,25 @@ $(document).ready(function () {
         sDom: 'tpl',
         processing: true,
         serverSide: true,
-        deferLoading: 0,
-        // ajax: set in update function
+        deferLoading: false,
         columnDefs: [{
             targets: 0,
             data: null,
             render: function (data, type, row, meta) {
-                return `<span style=\"color: ${data[0].color}\">${data[0].name}</span>`
+                return `<span style=\"color: ${row[0].color}\">${row[0].name}</span>`
             }
         }, {
             targets: 2,
             data: null,
             render: function (data, type, row, meta) {
-                let column_value = data[2]
-                return (column_value < 0) ? `<span class=\"text-danger\">${column_value}</span>` : `<span class=\"text-primary\">${column_value}</span>`
+                return (row[2] < 0) ? `<span class=\"text-danger\">${row[2]}</span>` :
+                    `<span class=\"text-primary\">${row[2]}</span>`
             }
         }, {
             targets: 3,
             data: null,
             render: function (data, type, row, meta) {
-                return `<span class=\"text-danger\">${data[3]}</span>`
+                return `<span class=\"text-danger\">${row[3]}</span>`
             }
         }],
         initComplete: (settings, json) => {
@@ -132,6 +81,60 @@ $(document).ready(function () {
 
     $('#categoriesBalanceTableSearch').keyup(function () {
         categoriesBalanceTable.search($(this).val()).draw();
+    });
+
+    let expensesTable = $('#expensesTable').DataTable({
+        columns: [
+            {data: 'description'},
+            {data: 'category'},
+            {data: 'timestamp'},
+            {data: 'value'},
+            {data: 'id'}
+        ],
+        lengthChange: true,
+        lengthMenu: [[25, 50, 100, -1], [25, 50, 100, 'All']],
+        order: [[2, 'desc']],
+        searching: true,
+        info: false,
+        sDom: 'tpl',
+        oLanguage: {sLengthMenu: '_MENU_'},
+        processing: true,
+        serverSide: true,
+        deferLoading: false,
+        columnDefs: [{
+            targets: 1,
+            render: function (data, type, row, meta) {
+                return `<span style=\"color: ${row.category.color}\">${row.category.name}</span>`
+            }
+        }, {
+            targets: 4,
+            searchable: false,
+            orderable: false,
+            render: function (data, type, row, meta) {
+                return `<button class="btn btn-sm text-primary text-decoration-none shadow-none p-0" 
+                        type="button" data-bs-toggle="modal" data-bs-target="#modal" 
+                        value="/expense/${row.id}/update">
+                            <i class="bi-pencil" style="font-size: 18px;"></i>
+                        </button>
+                        <button class="btn btn-sm text-danger text-decoration-none shadow-none p-0 ms-2" 
+                        type="button" data-bs-toggle="modal" data-bs-target="#modal" 
+                        value="/expense/${row.id}/delete">
+                            <i class="bi-trash" style="font-size: 18px;"></i>
+                        </button>`
+            }
+        }],
+        initComplete: (settings, json) => {
+            $('#expensesTable_length').appendTo('#expensesTableLengthArea');
+            $('#expensesTable_paginate').addClass('btn-sm p-0').appendTo('#expensesTablePaginationArea');
+            $('#expensesTablePaginationArea .pagination').addClass('mb-0');
+        },
+
+    }).on('draw.dt', function () {
+        $('#expensesTablePaginationArea .pagination').addClass('mb-0');
+    });
+
+    $('#expensesTableSearch').keyup(function () {
+        expensesTable.search($(this).val()).draw();
     });
 
     // others
@@ -196,8 +199,8 @@ $(document).ready(function () {
         }
 
         // update interface elements
-        $('#fromDate').datepicker('setDate', `1-${monthNumber}-${year}`).val();
-        $('#toDate').datepicker('setDate', `${lastMonthDay}-${monthNumber}-${year}`).val();
+        $('#fromDate').datepicker('setDate', `1-${monthNumber}-${year}`);
+        $('#toDate').datepicker('setDate', `${lastMonthDay}-${monthNumber}-${year}`);
 
         let dropdown = $('#categoryDropdown');
         dropdownStateUpdate(dropdown, $(`.color-dropdown-item:contains(${category}):first`));
@@ -276,8 +279,6 @@ $(document).ready(function () {
                 break;
 
             case 'categoryDropdown':
-                categoryId = $('#categoryDropdownValue').val()
-
                 expensesCategoryBalanceTablesUpdate();
                 spentByCategoryChartUpdate();
                 break;
