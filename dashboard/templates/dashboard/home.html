@@ -13,6 +13,7 @@
     <!-- jquery data table -->
     <script src="https://cdn.datatables.net/1.11.0/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.0/js/dataTables.bootstrap5.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/select/1.4.0/js/dataTables.select.min.js"></script>
 
     <!-- charts -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
@@ -78,7 +79,7 @@
                 <div class="card-body">
                     <canvas id="quickHistoryChart"></canvas>
                 </div>
-                <div style="height: 52px;" class="card-footer">
+                <div style="min-height: 52px;" class="card-footer">
                     <div class="d-flex align-items-center h-100">
                         <h5 class="m-0">Average expense: <span id="spentAverage">0</span></h5>
                     </div>
@@ -130,7 +131,7 @@
                 <div class="card-body">
                     <canvas id="spentByCategoryChart"></canvas>
                 </div>
-                <div style="height: 52px;" class="card-footer">
+                <div style="min-height: 52px;" class="card-footer">
                     <div class="d-flex align-items-center h-100">
                         <h5 class="m-0">Total spent: <span id="totalSpent">0</span></h5>
                     </div>
@@ -153,20 +154,20 @@
                 <div class="card-body">
                     <div class="container-lg">
                         <div class="table-responsive-md">
-                            <table id="categoriesBalanceTable" class="table w-100">
+                            <table id="categoriesBalanceTable" class="table align-middle w-100">
                                 <thead>
                                     <tr>
-                                        <td>Category</td>
-                                        <td>Limit</td>
-                                        <td>Balance</td>
-                                        <td>Spent</td>
+                                        <th scope="col">Category</th>
+                                        <th scope="col">Limit</th>
+                                        <th scope="col">Balance</th>
+                                        <th scope="col">Spent</th>
                                     </tr>
                                 </thead>
                             </table>
                         </div>
                     </div>
                 </div>
-                <div style="height: 52px;" class="card-footer">
+                <div style="min-height: 52px;" class="card-footer">
                     <div class="row justify-content-end">
                         <div class="col-4">
                             <div id="categoriesBalanceTablePaginationArea" class="d-flex justify-content-end"></div>
@@ -200,21 +201,21 @@
                 <div class="card-body">
                     <div class="container-lg">
                         <div class="table-responsive-md">
-                            <table id="expensesTable" class="table w-100">
+                            <table id="expensesTable" class="table align-middle w-100">
                                 <thead>
                                     <tr>
-                                        <td>Description</td>
-                                        <td>Category</td>
-                                        <td>Date</td>
-                                        <td>Value</td>
-                                        <td>Options</td>
+                                        <th scope="col">Description</th>
+                                        <th scope="col">Category</th>
+                                        <th scope="col" class="w-25">Date</th>
+                                        <th scope="col">Value</th>
+                                        <th scope="col">Options</th>
                                     </tr>
                                 </thead>
                             </table>
                         </div>
                     </div>
                 </div>
-                <div style="height: 52px;" class="card-footer">
+                <div style="min-height: 52px;" class="card-footer">
                     <div class="row justify-content-between">
                         <div class="col-2">
                             <button class="btn btn-sm btn-primary mt-1" type="button" data-bs-toggle="modal" data-bs-target="#modal" value="{{ url_for('dashboard.expense_create_form') }}">New</button>

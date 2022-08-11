@@ -1,7 +1,7 @@
 from flask_mail import Message
 from smtplib import SMTPException
 from dashboard import mail
-from dashboard.models import Expense
+from dashboard.models import Expense, Category
 
 
 def send_email(recipients, subject, body, is_html_body=False):
@@ -29,9 +29,11 @@ def get_expenses_by_date_interval_category(user, from_date, to_date, category_id
                                     Expense.timestamp >= from_date,
                                     Expense.timestamp <= to_date,
                                     Expense.category_id == category_id,
-                                    Expense.accepted)
+                                    Expense.accepted) \
+            .join(Category, Expense.category_id == Category.id)
 
     return Expense.query.filter(Expense.user == user,
                                 Expense.timestamp >= from_date,
                                 Expense.timestamp <= to_date,
-                                Expense.accepted)
+                                Expense.accepted) \
+        .join(Category, Expense.category_id == Category.id)

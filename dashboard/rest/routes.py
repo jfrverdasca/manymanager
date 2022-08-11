@@ -1,4 +1,4 @@
-import math
+import dashboard.rest.datatables as datatables
 
 from flask import Blueprint, current_app, request
 from flask_login import current_user
@@ -24,130 +24,54 @@ expense_fields = {
     'favorite_order': fields.Integer
 }
 
-# tables
-datatables_draw_values = {'expensesTable': 1,
-                          'categoriesBalanceTable': 1,
-                          'categoriesTable': 1,
-                          'favoritesTable': 1}
 
-
-class ExpensesTable(Resource):
+class ExpensesTable(Resource, datatables.DatatableHandler):
 
     # keep these variables with the same values as in Datatables javascript code
-    TABLE_NAME = 'expensesTable'
-    PAGE_LENGTH = 25
     COLUMNS_INDEX = {
         0: (Expense.description, str),
-        1: (Expense.category, Category),
+        1: (Category.name, str),
         2: (Expense.timestamp, datetime),  # default order column
         3: (Expense.value, float),
         4: ('Options', None)}
 
+    @datatables.datatable_parser()
     def get(self, from_date: datetime, to_date: datetime, category_id: int):
-        ordered_column, _ = self.COLUMNS_INDEX[request.args.get('order[0][column]', 2, int)]
-        order_direction = request.args.get('order[0][dir]', 'desc')
-        item_index_start = request.args.get('start', 0, int)
-        page_length = request.args.get('length', self.PAGE_LENGTH, int)
-        search_value = request.args.get('search[value]', '')
-
-        # add hour information to date
-        from_date = from_date.replace(hour=0, minute=0, second=0)
-        to_date = to_date.replace(hour=23, minute=59, second=59)
-
-        # search
-        search_parameters = list()
-        if search_value:
-            for index in self.COLUMNS_INDEX:
-                # is searchable
-                if request.args.get(f'columns[{index}][searchable]', False):
-                    column, data_type = self.COLUMNS_INDEX[index]
-                    if column is Expense.category:  # expense category relationship
-                        search_parameters.append(Category.name.contains(search_value))
-
-                    elif type(search_value) != data_type:
-                        search_parameters.append(cast(column, String).contains(search_value))
-
-                    else:
-                        search_parameters.append(column.contains(search_value))
-
         # get records from database
-        if category_id:
-            expense_records = Expense.query.filter(Expense.user == current_user,
-                                                   Expense.timestamp >= from_date,
-                                                   Expense.timestamp <= to_date,
-                                                   Expense.category_id == category_id,
-                                                   Expense.accepted,
-                                                   or_(*search_parameters))
+        expense_records = get_expenses_by_date_interval_category(current_user, from_date, to_date, category_id)
 
-        else:
-            expense_records = Expense.query.filter(Expense.user == current_user,
-                                                   Expense.timestamp >= from_date,
-                                                   Expense.timestamp <= to_date,
-                                                   Expense.accepted,
-                                                   or_(*search_parameters)) \
-                .join(Category, Expense.category_id == Category.id)
-
-        # order
-        if order_direction == 'desc':
-            # expense category relationship
-            expense_records = expense_records.order_by(desc(Category.name)) \
-                if ordered_column is Expense.category else expense_records.order_by(desc(ordered_column))
-
-        else:
-            # expense category relationship
-            expense_records = expense_records.order_by(Category.name) \
-                if ordered_column is Expense.category else expense_records.order_by(ordered_column)
-
-        records_count = expense_records.count()
-        if page_length < 0:  # user wants to see all records
-            page_length = records_count
+        # process datatables items
+        items, total_items = self.handle_datatable_request(expense_records, self.COLUMNS_INDEX)
 
         rows = list()
-        if records_count > 0:
-            # pagination
-            paginate = expense_records.paginate(
-                (item_index_start + page_length) / page_length,
-                per_page=page_length)
+        for item in items:
+            rows.append({'description': item.description,
+                         'category': {'name': item.category.name,
+                                      'color': item.category.color},
+                         'timestamp': item.timestamp.strftime(current_app.config.get('DATETIME_FORMAT')),
+                         'value': item.value,
+                         'id': item.id})
 
-            for item in paginate.items:
-                rows.append([item.description,
-                             {'name': item.category.name,
-                              'color': item.category.color},
-                             item.timestamp.strftime(current_app.config.get('DATETIME_FORMAT')),
-                             item.value,
-                             item.id])
-
-        response = {'draw': datatables_draw_values[self.TABLE_NAME],
-                    'recordsTotal': records_count,
-                    'recordsFiltered': records_count,
-                    'data': rows}
-
-        datatables_draw_values[self.TABLE_NAME] += 1
-
-        return response
+        return {'draw': self.datatable.draw,
+                'recordsTotal': total_items,
+                'recordsFiltered': total_items,
+                'data': rows}
 
 
 api.add_resource(ExpensesTable, '/expenses_table/<date:from_date>/<date:to_date>/<int:category_id>/')
 
 
-class CategoriesBalanceTable(Resource):
+class CategoriesBalanceTable(Resource, datatables.DatatableHandler):
 
     # keep these variables with the same values as in Datatables javascript code
-    TABLE_NAME = 'categoriesBalanceTable'
-    PAGE_LENGTH = 5
     COLUMNS_INDEX = {
         0: (Category.name, str),
         1: ('Limit', float),
         2: ('Balance', float),
         3: ('Spent', float)}
 
+    @datatables.datatable_parser()
     def get(self, from_date: datetime, to_date: datetime, category_id: int):
-        ordered_column = request.args.get('order[0][column]', 3, int)  # order done with python (not SQL)
-        order_direction = request.args.get('order[0][dir]', 'desc')
-        item_index_start = request.args.get('start', 0, int)
-        page_length = request.args.get('length', self.PAGE_LENGTH, int)
-        search_value = request.args.get('search[value]', '')
-
         # add hour information to date
         from_date = from_date.replace(hour=0, minute=0, second=0)
         to_date = to_date.replace(hour=23, minute=59, second=59)
@@ -160,204 +84,121 @@ class CategoriesBalanceTable(Resource):
 
         # get expense sum by category
         expenses_sum_by_category = expense_records \
-            .join(Category, Expense.category_id == Category.id) \
             .with_entities(Category, func.sum(Expense.value).label('sum')) \
             .group_by(Category.id) \
             .order_by(Category.name)
 
         records_count = expenses_sum_by_category.count()
-        if page_length < 0:  # user wants to see all records
-            page_length = records_count
+        if self.datatable.page_length < 0:  # user wants to see all records
+            self.datatable.page_length = records_count
+
+        # pagination
+        paginate = expenses_sum_by_category.paginate(self.datatable.pagination_page,
+                                                     per_page=self.datatable.page_length)
 
         rows = list()
-        if records_count > 0:
-            # pagination
-            paginate = expenses_sum_by_category.paginate(
-                (item_index_start + page_length) / page_length,
-                per_page=page_length)
+        for category, expenses_sum in paginate.items:
+            months_category_limit = round(category.limit * months_between_dates, 2)
 
-            for category, expenses_sum in paginate.items:
-                months_category_limit = category.limit * months_between_dates
+            row_data = [{'name': category.name,
+                         'color': category.color},
+                        months_category_limit,
+                        round(months_category_limit - expenses_sum, 2),
+                        round(expenses_sum, 2)]
 
-                row_data = [
-                    {'name': category.name,
-                     'color': category.color},
-                    months_category_limit,
-                    round(months_category_limit - expenses_sum, 2),
-                    round(expenses_sum, 2)]
-
-                # search
-                if search_value:
-                    if any(map(lambda v: search_value in (v['name'] if isinstance(v, dict) else str(v)), row_data)):
-                        rows.append(row_data)
-
-                else:
-                    rows.append(row_data)
-
-            # order
-            if order_direction == 'desc':
-                rows.sort(key=lambda i: i[ordered_column]) \
-                    if ordered_column > 0 else rows.sort(key=lambda i: i[ordered_column]['name'])
+            # search
+            if self.datatable.search_value and \
+                not any(map(lambda v: self.datatable.search_value in
+                                      (v['name'] if isinstance(v, dict) else str(v)), row_data)):
+                continue
 
             else:
-                rows.sort(key=lambda i: i[ordered_column], reverse=True) \
-                    if ordered_column > 0 else rows.sort(key=lambda i: i[ordered_column]['name'], reverse=True)
+                rows.append(row_data)
 
-        response = {'draw': datatables_draw_values[self.TABLE_NAME],
-                    'recordsTotal': records_count,
-                    'recordsFiltered': records_count,
-                    'data': rows}
+        # order
+        reverse = self.datatable.order_direction == 'asc'
+        if getattr(self.datatable, f'column_{self.datatable.ordered_column}_orderable'):
+            rows.sort(key=lambda i: i[self.datatable.ordered_column], reverse=reverse) \
+                if self.datatable.ordered_column > 0 else \
+                rows.sort(key=lambda i: i[self.datatable.ordered_column]['name'], reverse=reverse)
 
-        datatables_draw_values[self.TABLE_NAME] += 1
-
-        return response
+        return {'draw': self.datatable.draw,
+                'recordsTotal': records_count,
+                'recordsFiltered': records_count,
+                'data': rows}
 
 
 api.add_resource(CategoriesBalanceTable, '/categories_balance_table/<date:from_date>/<date:to_date>/<int:category_id>/')
 
 
-class SettingsCategoriesTable(Resource):
+class SettingsCategoriesTable(Resource, datatables.DatatableHandler):
 
     # keep these variables with the same values as in Datatables javascript code
-    TABLE_NAME = 'categoriesTable'
-    PAGE_LENGTH = 10
     COLUMNS_INDEX = {
         0: (Category.name, str),
         1: (Category.limit, float),
         2: ('Options', None)}
 
+    @datatables.datatable_parser()
     def get(self):
-        ordered_column, _ = self.COLUMNS_INDEX[request.args.get('order[0][column]', 0, int)]  # order done with python (not SQL)
-        order_direction = request.args.get('order[0][dir]', 'desc')
-        item_index_start = request.args.get('start', 0, int)
-        page_length = request.args.get('length', self.PAGE_LENGTH, int)
-        search_value = request.args.get('search[value]', '')
-
-        # search
-        search_parameters = list()
-        if search_value:
-            for index in self.COLUMNS_INDEX:
-                # is searchable
-                if request.args.get(f'columns[{index}][searchable]', False):
-                    column, data_type = self.COLUMNS_INDEX[index]
-                    if type(search_value) != data_type:
-                        search_parameters.append(cast(column, String).contains(search_value))
-
-                    else:
-                        search_parameters.append(column.contains(search_value))
-
         # get records from database
-        category_records = Category.query.filter(Category.user == current_user,
-                                                 or_(*search_parameters))
+        category_records = Category.query.filter(Category.user == current_user)
 
-        # order
-        category_records = category_records.order_by(desc(ordered_column)) \
-            if order_direction == 'desc' else category_records.order_by(ordered_column)
-
-        records_count = category_records.count()
-        if page_length < 0:
-            page_length = records_count
+        # process datatables items
+        items, total_items = self.handle_datatable_request(category_records, self.COLUMNS_INDEX)
 
         rows = list()
-        if records_count > 0:
-            # pagination
-            paginate = category_records.paginate(
-                (item_index_start + page_length) / page_length,
-                per_page=page_length)
+        for item in items:
+            rows.append([{'name': item.name,
+                          'color': item.color},
+                         item.limit,
+                         item.id])
 
-            for item in paginate.items:
-                rows.append([{'name': item.name,
-                              'color': item.color},
-                             item.limit,
-                             item.id])
-
-        response = {'draw': datatables_draw_values[self.TABLE_NAME],
-                    'recordsTotal': records_count,
-                    'recordsFiltered': records_count,
-                    'data': rows}
-
-        datatables_draw_values[self.TABLE_NAME] += 1
-
-        return response
+        return {'draw': self.datatable.draw,
+                'recordsTotal': total_items,
+                'recordsFiltered': total_items,
+                'data': rows}
 
 
 api.add_resource(SettingsCategoriesTable, '/categories_table/')
 
 
-class SettingsFavoritesTable(Resource):
+class SettingsFavoritesTable(Resource, datatables.DatatableHandler):
 
     # keep these variables with the same values as in Datatables javascript code
-    TABLE_NAME = 'favoritesTable'
-    PAGE_LENGTH = 10
     COLUMNS_INDEX = {
         0: (Expense.description, str),
         1: (Expense.value, float),
         2: ('Options', None),
         3: (Expense.favorite_sort, int)}
 
+    @datatables.datatable_parser()
     def get(self):
-        ordered_column, _ = self.COLUMNS_INDEX[request.args.get('order[0][column]', -1, int)]
-        order_direction = request.args.get('order[0][dir]', 'desc')
-        item_index_start = request.args.get('start', 0, int)
-        page_length = request.args.get('length', self.PAGE_LENGTH, int)
-        search_value = request.args.get('search[value]', '')
-
-        # search
-        search_parameters = list()
-        if search_value:
-            for index in self.COLUMNS_INDEX:
-                # is searchable
-                if request.args.get(f'columns[{index}][searchable]', False):
-                    column, data_type = self.COLUMNS_INDEX[index]
-                    if type(search_value) != data_type:
-                        search_parameters.append(cast(column, String).contains(search_value))
-
-                    else:
-                        search_parameters.append(column.contains(search_value))
-
         # get records from database
         favorite_records = Expense.query.filter(Expense.user == current_user,
                                                 Expense.is_favorite,
-                                                Expense.accepted,
-                                                or_(*search_parameters)) \
+                                                Expense.accepted) \
             .join(Category, Expense.category_id == Category.id)
 
-        # order
-        if order_direction == 'desc':
-            favorite_records = favorite_records.order_by(desc(ordered_column))
-
-        else:
-            favorite_records = favorite_records.order_by(ordered_column)
-
-        records_count = favorite_records.count()
-        if page_length < 0:
-            page_length = records_count
+        # process datatables items
+        items, total_items = self.handle_datatable_request(favorite_records, self.COLUMNS_INDEX)
 
         rows = list()
-        if records_count > 0:
-            # pagination
-            paginate = favorite_records.paginate(
-                (item_index_start + page_length) / page_length,
-                per_page=page_length)
+        for item in items:
+            rows.append([{'name': item.description,
+                          'color': item.category.color},
+                         item.value,
+                         item.id,
+                         item.favorite_sort])
 
-            for item in paginate.items:
-                rows.append([{'name': item.description,
-                              'color': item.category.color},
-                             item.value,
-                             item.id,
-                             item.favorite_sort])
-
-        response = {'draw': datatables_draw_values[self.TABLE_NAME],
-                    'recordsTotal': records_count,
-                    'recordsFiltered': records_count,
-                    'data': rows}
-
-        datatables_draw_values[self.TABLE_NAME] += 1
-
-        return response
+        return {'draw': self.datatable.draw,
+                'recordsTotal': total_items,
+                'recordsFiltered': total_items,
+                'data': rows}
 
 
 api.add_resource(SettingsFavoritesTable, '/favorites_table/')
+
 
 # charts
 class ExpensesCategoriesChart(Resource):
@@ -366,16 +207,12 @@ class ExpensesCategoriesChart(Resource):
         if not current_user.is_authenticated:
             abort(401, message='Authentication required')
 
+        from_data = from_date.replace(hour=0, minute=0, second=0)
         to_date = to_date.replace(hour=23, minute=59, second=59)
 
-        if category_id:
-            expenses = get_expenses_by_date_interval_category(current_user, from_date, to_date, category_id)
-
-        else:
-            expenses = get_expenses_by_date_interval_category(current_user, from_date, to_date)
+        expenses = get_expenses_by_date_interval_category(current_user, from_date, to_date, category_id)
 
         expenses_sum_by_category = expenses \
-            .join(Category, Expense.category_id == Category.id) \
             .with_entities(Category, func.sum(Expense.value).label('sum')) \
             .group_by(Category) \
             .order_by(desc('sum'))
@@ -406,7 +243,7 @@ class QuickHistoryChart(Resource):
         if not current_user.is_authenticated:
             abort(401, message='Authentication required')
 
-        to_date = datetime.now()
+        to_date = datetime.now().replace(hour=23, minute=59, second=59)
         from_date = to_date - relativedelta(months=months)
 
         month_trunc = func.date_trunc('month', Expense.timestamp)

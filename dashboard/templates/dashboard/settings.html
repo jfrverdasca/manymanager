@@ -53,7 +53,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="card-footer">
+                <div style="min-height: 52px;" class="card-footer">
                     <div class="row justify-content-between">
                         <div class="col-2">
                             <button class="btn btn-sm btn-primary mt-1" type="button" data-bs-toggle="modal" data-bs-target="#modal" value="None">New</button>
@@ -82,18 +82,18 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive-md">
-                        <table id="categoriesTable" class="table w-100">
+                        <table id="categoriesTable" class="table align-middle w-100">
                             <thead>
                                 <tr>
-                                    <td>Name</td>
-                                    <td>Limit</td>
-                                    <td>Options</td>
+                                    <th scope="col">Name</th>
+                                    <th scope="col">Limit</th>
+                                    <th scope="col">Options</th>
                                 </tr>
                             </thead>
                         </table>
                     </div>
                 </div>
-                <div class="card-footer">
+                <div style="min-height: 52px;" class="card-footer">
                     <div class="row justify-content-between">
                         <div class="col-2">
                             <button class="btn btn-sm btn-primary mt-1" type="button" data-bs-toggle="modal" data-bs-target="#modal" value="{{ url_for('dashboard.category_create_form') }}">New</button>
@@ -120,19 +120,19 @@
                 </div>
                 <div class="card-body">
                     <div id="favoritesTableArea" class="table-responsive-md">
-                        <table id="favoritesTable" class="table w-100">
+                        <table id="favoritesTable" class="table align-middle w-100">
                             <thead>
                                 <tr>
-                                    <td>Description</td>
-                                    <td>Value</td>
-                                    <td>Options</td>
-                                    <td hidden>Favorite Order</td> <!-- just for column ordering -->
+                                    <th scope="col">Description</th>
+                                    <th scope="col">Value</th>
+                                    <th scope="col">Options</th>
+                                    <th hidden>Favorite Order</th> <!-- just for column ordering -->
                                 </tr>
                             </thead>
                         </table>
                     </div>
                 </div>
-                <div style="height: 52px;" class="card-footer">
+                <div style="min-height: 52px;" class="card-footer">
                     <div class="row justify-content-end">
                         <div class="col-4">
                             <div id="favoritesTablePaginationArea" class="d-flex justify-content-end"></div>
@@ -160,7 +160,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="card-footer">
+                <div style="min-height: 52px;" class="card-footer">
                     <div class="row justify-content-between">
                         <div class="col-2">
                             <button class="btn btn-sm btn-primary mt-1" type="button" data-bs-toggle="modal" data-bs-target="#modal" value="">New</button>
