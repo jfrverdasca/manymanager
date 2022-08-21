@@ -28,12 +28,10 @@ def get_expenses_by_date_interval_category(user, from_date, to_date, category_id
         return Expense.query.filter(Expense.user == user,
                                     Expense.timestamp >= from_date,
                                     Expense.timestamp <= to_date,
-                                    Expense.category_id == category_id,
-                                    Expense.accepted) \
+                                    Expense.category_id == category_id) \
             .join(Category, Expense.category_id == Category.id)
 
     return Expense.query.filter(Expense.user == user,
                                 Expense.timestamp >= from_date,
-                                Expense.timestamp <= to_date,
-                                Expense.accepted) \
+                                Expense.timestamp <= to_date) \
         .join(Category, Expense.category_id == Category.id)

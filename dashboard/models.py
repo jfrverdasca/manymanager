@@ -1,18 +1,22 @@
 from flask import current_app
 from flask_login import UserMixin
-from sqlalchemy.orm import validates
+from sqlalchemy.orm import validates, synonym
 from itsdangerous import TimedJSONWebSignatureSerializer, SignatureExpired, BadSignature
 from datetime import datetime
 from dashboard import db, login_manager
 
 
 class Share(db.Model):
-    left_user_id = db.Column(db.BigInteger, db.ForeignKey('user.id'), primary_key=True)
-    right_user_id = db.Column(db.BigInteger, db.ForeignKey('user.id'), primary_key=True)
-    expiration_time = db.Column(db.DateTime, nullable=False)
 
-    sharing = db.relationship('User', back_populates='shared_by', foreign_keys=right_user_id)  # follow - followers
-    shared = db.relationship('User', back_populates='share_with', foreign_keys=left_user_id)  # followed - follows
+    __table_args__ = db.PrimaryKeyConstraint('left_id', 'right_id', name='share_pk'),
+
+    left_id = db.Column(db.BigInteger, db.ForeignKey('user.id'))  # me
+    right_id = db.Column(db.BigInteger, db.ForeignKey('user.id'))  # others
+
+    shared_by = db.relationship('User', back_populates='shared_by', foreign_keys=[left_id])
+    shared_with = db.relationship('User', back_populates='shared_with', foreign_keys=[right_id])
+
+    user = synonym('shared_with')  # to be used in ShareForm
 
     @staticmethod
     def get_share_request_token(share_with_user_id):
@@ -46,17 +50,18 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(128), nullable=False)
     active = db.Column(db.Boolean(), default=True)
 
-    # own many-to-many relationships (using share table)
-    share_with = \
-        db.relationship('Share', back_populates='shared', foreign_keys='Share.right_user_id')  # follows - followed
-    shared_by = \
-        db.relationship('Share', back_populates='sharing', foreign_keys='Share.left_user_id')  # followers - follow
+    # own one-to-many relationships
+    shared_by = db.relationship('Share', foreign_keys=Share.left_id)  # me
+    shared_with = db.relationship('Share', foreign_keys=Share.right_id)  # others
 
     # category one-to-many relationship
     categories = db.relationship('Category', back_populates='user')
 
     # expense one-to-many relationship
     expenses = db.relationship('Expense', back_populates='user')
+
+    # alerts one-to-many relationship
+    alerts = db.relationship('Alert', back_populates='user')
 
     @property
     def is_active(self):
@@ -114,7 +119,6 @@ class Expense(db.Model):
     description = db.Column(db.String(50))
     timestamp = db.Column(db.DateTime, default=datetime.now)
     value = db.Column(db.Float, default=0)
-    accepted = db.Column(db.Boolean, default=True)
     is_favorite = db.Column(db.Boolean, default=False)
     favorite_sort = db.Column(db.Integer, nullable=True)
 
@@ -161,3 +165,28 @@ class Expense(db.Model):
 
         for i, expense in enumerate(expenses):
             expense.favorite_sort = i
+
+    def copy(self):
+        return Expense(description=self.description,
+                       timestamp=self.timestamp,
+                       value=self.value,
+                       is_favorite=self.is_favorite,
+                       favorite_sort=self.favorite_sort,
+                       user=self.user,
+                       category_id=self.category_id,
+                       parent_id=self.parent_id)
+
+    def get_child_expenses(self):
+        return Expense.query.filter(Expense.parent_id == self.id)
+
+
+class Alert(db.Model):
+
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    title = db.Column(db.String(50), nullable=True)
+    description = db.Column(db.String(5000))
+    seen = db.Column(db.Boolean, default=False)
+
+    # user one-to-many relationship
+    user_id = db.Column(db.BigInteger, db.ForeignKey('user.id'))
+    user = db.relationship('User', back_populates='alerts')

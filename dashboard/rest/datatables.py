@@ -57,8 +57,6 @@ class DatatableHandler:
     datatable = None
 
     def handle_datatable_request(self, records, columns_index_type):
-        ordered_column, _ = columns_index_type[self.datatable.ordered_column]
-
         # filter
         search_parameters = list()
         if self.datatable.search_value:
@@ -75,7 +73,9 @@ class DatatableHandler:
         records = records.filter(or_(*search_parameters))
 
         # order
-        if getattr(self.datatable, f'column_{self.datatable.ordered_column}_orderable'):
+        if self.datatable.ordered_column and \
+                getattr(self.datatable, f'column_{self.datatable.ordered_column}_orderable'):
+            ordered_column, _ = columns_index_type.get(self.datatable.ordered_column)
             if self.datatable.order_direction == 'desc':
                 records = records.order_by(desc(ordered_column))
 

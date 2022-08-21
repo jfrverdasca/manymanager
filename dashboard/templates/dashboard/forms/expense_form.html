@@ -1,3 +1,27 @@
+<script type="text/javascript">
+    $(document).ready(function () {
+        let datepickerPositionUpdateInterval = null;
+        $('#date').datepicker({
+            dateFormat: 'dd-mm-yy',
+            beforeShow: function (input, inst) {
+                // popup and initial-scale=1 position workaround in mobile devices
+                datepickerPositionUpdateInterval = setInterval(function () {
+                    inst.dpDiv.position({
+                        my: 'left, top',
+                        at: 'left, bottom',
+                        collision: 'none',
+                        of: input
+                    })
+                }, 1);
+            },
+            onClose: function (dateText, inst) {
+                if (datepickerPositionUpdateInterval)
+                    clearInterval(datepickerPositionUpdateInterval);
+            }
+        });
+    })
+</script>
+
 <div class="card shadow-lg">
     <div class="card-header">
         <div class="row justify-content-between">

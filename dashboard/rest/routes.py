@@ -1,15 +1,14 @@
 import dashboard.rest.datatables as datatables
 
-from flask import Blueprint, current_app, request
+from flask import Blueprint, current_app
 from flask_login import current_user
 from flask_restful import Resource, reqparse, marshal_with, fields, abort
-from sqlalchemy import String
-from sqlalchemy.sql import func, desc, cast, or_
+from sqlalchemy.sql import func, desc
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
 from calendar import month_name
 from dashboard import api
-from dashboard.models import db, Category, Expense
+from dashboard.models import db, User, Category, Expense, Share
 from dashboard.utilities import get_expenses_by_date_interval_category
 
 api_blueprint = Blueprint('api', __name__)
@@ -37,6 +36,9 @@ class ExpensesTable(Resource, datatables.DatatableHandler):
 
     @datatables.datatable_parser()
     def get(self, from_date: datetime, to_date: datetime, category_id: int):
+        if not current_user.is_authenticated:
+            abort(401, message='Authentication required')
+
         # get records from database
         expense_records = get_expenses_by_date_interval_category(current_user, from_date, to_date, category_id)
 
@@ -72,6 +74,9 @@ class CategoriesBalanceTable(Resource, datatables.DatatableHandler):
 
     @datatables.datatable_parser()
     def get(self, from_date: datetime, to_date: datetime, category_id: int):
+        if not current_user.is_authenticated:
+            abort(401, message='Authentication required')
+
         # add hour information to date
         from_date = from_date.replace(hour=0, minute=0, second=0)
         to_date = to_date.replace(hour=23, minute=59, second=59)
@@ -109,7 +114,7 @@ class CategoriesBalanceTable(Resource, datatables.DatatableHandler):
             # search
             if self.datatable.search_value and \
                 not any(map(lambda v: self.datatable.search_value in
-                                      (v['name'] if isinstance(v, dict) else str(v)), row_data)):
+                            (v['name'] if isinstance(v, dict) else str(v)), row_data)):
                 continue
 
             else:
@@ -141,6 +146,9 @@ class SettingsCategoriesTable(Resource, datatables.DatatableHandler):
 
     @datatables.datatable_parser()
     def get(self):
+        if not current_user.is_authenticated:
+            abort(401, message='Authentication required')
+
         # get records from database
         category_records = Category.query.filter(Category.user == current_user)
 
@@ -174,10 +182,12 @@ class SettingsFavoritesTable(Resource, datatables.DatatableHandler):
 
     @datatables.datatable_parser()
     def get(self):
+        if not current_user.is_authenticated:
+            abort(401, message='Authentication required')
+
         # get records from database
         favorite_records = Expense.query.filter(Expense.user == current_user,
-                                                Expense.is_favorite,
-                                                Expense.accepted) \
+                                                Expense.is_favorite) \
             .join(Category, Expense.category_id == Category.id)
 
         # process datatables items
@@ -200,6 +210,39 @@ class SettingsFavoritesTable(Resource, datatables.DatatableHandler):
 api.add_resource(SettingsFavoritesTable, '/favorites_table/')
 
 
+class ShareUserTable(Resource, datatables.DatatableHandler):
+
+    # keep these variables with the same values as in Datatables javascript code
+    COLUMNS_INDEX = {
+        0: (Share.left_id, str),
+        1: ('Value', float)
+    }
+
+    @datatables.datatable_parser()
+    def get(self):
+        if not current_user.is_authenticated:
+            abort(401, message='Authentication required')
+
+        # get records from database
+        share_records = Share.query.filter(Share.left_user_id == current_user.id)
+
+        # process datatables items
+        items, total_items = self.handle_datatable_request(share_records, self.COLUMNS_INDEX)
+
+        rows = list()
+        for item in items:
+            rows.append([{'id': item.sharing.id,
+                          'name': item.sharing.username}])
+
+        return {'draw': self.datatable.draw,
+                'recordsTotal': total_items,
+                'recordsFiltered': total_items,
+                'data': rows}
+
+
+api.add_resource(ShareUserTable, '/share_table/')
+
+
 # charts
 class ExpensesCategoriesChart(Resource):
 
@@ -207,7 +250,7 @@ class ExpensesCategoriesChart(Resource):
         if not current_user.is_authenticated:
             abort(401, message='Authentication required')
 
-        from_data = from_date.replace(hour=0, minute=0, second=0)
+        from_date = from_date.replace(hour=0, minute=0, second=0)
         to_date = to_date.replace(hour=23, minute=59, second=59)
 
         expenses = get_expenses_by_date_interval_category(current_user, from_date, to_date, category_id)

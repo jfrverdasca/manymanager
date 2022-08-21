@@ -300,8 +300,6 @@ $(document).ready(function () {
     });
 
     $('#modalContentArea').change(function () {
-        $('#date').datepicker({dateFormat: 'dd-mm-yy'});
-
         let categoryId= $('input[name="category"]', this).val();
         if (categoryId !== '0')
             dropdownStateUpdate($('.dropdown', this), $(`.color-dropdown-item[value="${categoryId}"]`, this));

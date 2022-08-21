@@ -17,7 +17,7 @@ def favorites_list():
         abort(401)
 
     return render_template('dashboard/ajax/favorites_list.html',
-                           favorites=Expense.query.filter_by(user=current_user, accepted=True, is_favorite=True)
+                           favorites=Expense.query.filter_by(user=current_user, is_favorite=True)
                            .join(Category, Expense.category_id == Category.id)
                            .order_by(Expense.favorite_sort)
                            .all())
