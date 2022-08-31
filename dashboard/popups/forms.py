@@ -1,6 +1,18 @@
 from flask_wtf import FlaskForm
-from wtforms import validators, widgets, DateField, TimeField, \
-    SelectField, StringField, FloatField, BooleanField, SubmitField
+from wtforms import validators, widgets, DateField, TimeField, SelectField, StringField, FloatField, BooleanField, \
+    SubmitField, HiddenField, FieldList, FormField
+
+
+class ShareRequestForm(FlaskForm):
+
+    email = StringField('User email', validators=[validators.DataRequired(), validators.Email()])
+    submit = SubmitField('Request')
+
+
+class ShareForm(FlaskForm):
+
+    user = HiddenField('User')
+    value = FloatField('Value', default=0, validators=[validators.Optional(), validators.NumberRange(min=0)])
 
 
 class ExpenseForm(FlaskForm):
@@ -12,6 +24,10 @@ class ExpenseForm(FlaskForm):
     time = TimeField('Time', format='%H:%M:%S', validators=[validators.DataRequired()])
     value = FloatField('Value', default=0, validators=[validators.DataRequired(), validators.NumberRange(min=0)])
     is_favorite = BooleanField('Favorite', default=False, validators=[validators.Optional()])
+    has_parent = BooleanField('Parent', default=False)
+
+    shares = FieldList(FormField(ShareForm), min_entries=0)
+
     submit = SubmitField('Save')
 
 
@@ -25,5 +41,7 @@ class CategoryForm(FlaskForm):
 
 # generic entity delete form
 class DeleteForm(FlaskForm):
+
+    shares = FieldList(FormField(ShareForm), min_entries=0)
 
     submit = SubmitField('Delete')

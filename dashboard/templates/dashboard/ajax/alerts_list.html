@@ -1,0 +1,50 @@
+{% if alerts %}
+    <script>
+        $(document).ready(function () {
+
+        });
+    </script>
+
+    {% for row in alerts %}
+        <div class="card bg-light border-primary shadow-sm mb-2">
+            <div class="card-header text-primary">
+                <div class="row">
+                    {% if row.expense %}
+                        <div class="col-12">
+                            <h5 class="mb-0">{{ row.title }}</h5>
+                        </div>
+                    {% else %}
+                        <div class="col-10">
+                            <h5 class="mb-0">{{ row.title }}</h5>
+                        </div>
+                        <div class="col-2 text-end">
+                            <button id="closeAlert" class="btn-close p-2" type="button" aria-label="Close" value="{{ row.id }}"></button>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <small class="text-secondary">{{ row.timestamp|timeagostr }}</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body py-2">
+                <!-- alert with expense -->
+                {% if row.expense %}
+                    <div class="row d-flex align-items-center">
+                        <div class="col-10 card-text">
+                           {{ row.description }}
+                        </div>
+                        <div class="col-2 d-flex justify-content-end">
+                            <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#modal" value="popups/expense/{{ row.expense_id }}/update">
+                                Open expense
+                            </button>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="card-text">{{ row.description }}</p>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+{% endif %}

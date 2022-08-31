@@ -62,6 +62,9 @@ def create_app(config_class=Config):
     from dashboard.dashboard.routes import dashboard_blueprint
     app.register_blueprint(dashboard_blueprint)
 
+    from dashboard.popups.routes import popups_blueprint
+    app.register_blueprint(popups_blueprint, url_prefix='/popups')
+
     app.app_context().push()
     db.create_all()
 

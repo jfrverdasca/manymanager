@@ -1,12 +1,12 @@
 import logging
 
 from flask import Blueprint, render_template, redirect, url_for, request, flash
-from flask_login import current_user, login_user, logout_user
+from flask_login import current_user, login_user, logout_user, login_required
 from sqlalchemy import or_
 from werkzeug.security import generate_password_hash, check_password_hash
 from .forms import RegisterForm, LoginForm, RequestPasswordResetForm, PasswordResetForm
 from dashboard.utilities import send_email
-from dashboard.models import db, User
+from dashboard.models import db, User, Share
 
 logger = logging.getLogger(__name__)
 
@@ -104,3 +104,19 @@ def password_reset(token):
         return redirect(url_for('auth.login'))
 
     return render_template('users/password_reset.html', form=PasswordResetForm())
+
+
+@users_blueprint.route('/share-with-user/<token>', methods=['GET', 'POST'])
+@login_required
+def share_with_user(token):
+    user = User.check_share_with_token(token)
+    if not user:
+        flash('Invalid or expired request sharing permission token', 'danger')
+
+    else:
+        db.session.add(Share(shared_by=user, shared_with=current_user))
+        db.session.commit()
+
+        flash(f'User {user.username} can now share expenses with you', 'success')
+
+    return redirect(url_for('dashboard.home'))

@@ -1,0 +1,43 @@
+<div class="card shadow-lg">
+    <div class="card-header">
+        <div class="row justify-content-between">
+            <div class="col-10">
+                <h3>Request sharing permission</h3>
+            </div>
+            <div class="col-2 text-end">
+                <button class="btn-close p-2" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+    <form class="needs-validation" method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <div class="card-body">
+            <div class="row justify-content-start align-items-center">
+                <div class="col-3">
+                    {{ form.email.label }}:
+                </div>
+                <div class="col-6">
+                    {% if form.email.errors %}
+                        {{ form.email(class="form-control is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.email.errors %}
+                                <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.email(class="form-control") }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row justify-content-start mt-3">
+                <div class="col-12">
+                    <small class="text-secondary">If there is a user with the entered email address, a request to allow expense sharing will be sent.</small>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            {{ form.submit(class="btn btn-primary") }}
+            <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Cancel</button>
+        </div>
+    </form>
+</div>

@@ -24,29 +24,26 @@
         <div class="col-12">
             <div class="card shadow-sm">
                 <div class="card-header">
-                    <h3>Favorites</h3>
+                    <h3>Alerts</h3>
                 </div>
-                <div class="card-body">
-                    <div id="favoritesListArea">
-                        <p class="mb-0">Add items to favorites to add expenses with one click. Select the <b>Favorite</b> option when adding a new expense</p>
-                        <small>Note: Add items whose price is not variable</small>
-                    </div>
+                <div class="card-body overflow-auto">
+                    <div id="alertsListArea"></div>
                 </div>
             </div>
         </div>
     </div>
-    <!--<div class="row mt-3">
+    <div class="row mt-3">
         <div class="col-12">
             <div class="card shadow-sm">
                 <div class="card-header">
-                    <h3>Shares approval</h3>
+                    <h3>Favorites</h3>
                 </div>
                 <div class="card-body">
-                    <div class="sharesApprovalArea"></div>
+                    <div id="favoritesListArea"></div>
                 </div>
             </div>
         </div>
-    </div>-->
+    </div>
     <div class="row mt-3">
         <div class="col-12">
             <div class="card shadow-sm">
@@ -209,6 +206,7 @@
                                         <th scope="col" class="w-25">Date</th>
                                         <th scope="col">Value</th>
                                         <th scope="col">Options</th>
+                                        <th scope="col">Shared</th>
                                     </tr>
                                 </thead>
                             </table>
@@ -218,7 +216,7 @@
                 <div style="min-height: 52px;" class="card-footer">
                     <div class="row justify-content-between">
                         <div class="col-2">
-                            <button class="btn btn-sm btn-primary mt-1" type="button" data-bs-toggle="modal" data-bs-target="#modal" value="{{ url_for('dashboard.expense_create_form') }}">New</button>
+                            <button class="btn btn-sm btn-primary mt-1" type="button" data-bs-toggle="modal" data-bs-target="#modal" value="{{ url_for('popup.expense_create_form') }}">New</button>
                         </div>
                         <div class="col-4">
                             <div id="expensesTablePaginationArea" class="d-flex justify-content-end"></div>

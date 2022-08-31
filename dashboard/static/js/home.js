@@ -89,7 +89,8 @@ $(document).ready(function () {
             {data: 'category'},
             {data: 'timestamp'},
             {data: 'value'},
-            {data: 'id'}
+            {data: 'id'},
+            {data: 'shared'}
         ],
         lengthChange: true,
         lengthMenu: [[25, 50, 100, -1], [25, 50, 100, 'All']],
@@ -113,14 +114,26 @@ $(document).ready(function () {
             render: function (data, type, row, meta) {
                 return `<button class="btn btn-sm text-primary text-decoration-none shadow-none p-0" 
                         type="button" data-bs-toggle="modal" data-bs-target="#modal" 
-                        value="/expense/${row.id}/update">
+                        value="popups/expense/${row.id}/update">
                             <i class="bi-pencil" style="font-size: 18px;"></i>
                         </button>
                         <button class="btn btn-sm text-danger text-decoration-none shadow-none p-0 ms-2" 
                         type="button" data-bs-toggle="modal" data-bs-target="#modal" 
-                        value="/expense/${row.id}/delete">
+                        value="popups/expense/${row.id}/delete">
                             <i class="bi-trash" style="font-size: 18px;"></i>
                         </button>`
+            }
+        }, {
+            targets: 5,
+            searchable: false,
+            orderable: false,
+            render: function (data, type, row, meta) {
+                if (row.shared)
+                    return `<span>
+                                <i class="bi-share" style="font-size: 18px;"></i>
+                            </span>`
+
+                return null;
             }
         }],
         initComplete: (settings, json) => {
@@ -209,6 +222,22 @@ $(document).ready(function () {
         spentByCategoryChartUpdate();
     }
 
+    function alertsListUpdate() {
+        $.get('/alerts-list', function (response) {
+            $('#alertsListArea').html(response);
+
+            let alertsHeight = 0
+            $('#alertsListArea .card').each(function (i, e) {
+                alertsHeight += $(e).height();
+
+                if (i === 1) {
+                    $('#alertsListArea').parent().height(alertsHeight);
+                    return false;
+                }
+            });
+        });
+    }
+
     function favoritesListUpdate() {
         $.get('/favorites-list', function (response) {
             $('#favoritesListArea').html(response);
@@ -262,6 +291,7 @@ $(document).ready(function () {
             spentByCategoryChartUpdate();
         });
 
+        alertsListUpdate();
         favoritesListUpdate();
         quickHistoryChartUpdate();
         expensesCategoryBalanceTablesUpdate();
@@ -297,6 +327,17 @@ $(document).ready(function () {
                 spentByCategoryChartUpdate();
             }
         });
+    }).on('click', '#closeAlert', function () {
+        $.ajax({
+            url: `/seen-alert/${$(this).val()}`,
+            method: 'POST',
+            headers: {'Content-Type': 'application/json',
+                      'X-CSRF-Token': $('meta[name="csrf"]').attr('content')},
+            error: (xhr, status, error) => {console.log(status, error)},
+            success: () => {
+                alertsListUpdate();
+            }
+        });
     });
 
     $('#modalContentArea').change(function () {
@@ -306,6 +347,7 @@ $(document).ready(function () {
     });
 
     $('#modal').on('post.success', function () {
+        alertsListUpdate();
         favoritesListUpdate();
         quickHistoryChartUpdate();
         expensesCategoryBalanceTablesUpdate();

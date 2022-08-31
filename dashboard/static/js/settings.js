@@ -23,12 +23,12 @@ $(document).ready(function () {
             render: function (data, type, row, meta) {
                 return `<button class="btn btn-sm text-primary text-decoration-none shadow-none p-0" 
                         type="button" data-bs-toggle="modal" data-bs-target="#modal" 
-                        value="/category/${data[2]}/update">
+                        value="popups/category/${data[2]}/update">
                             <i class="bi-pencil" style="font-size: 18px;"></i>
                         </button>
                         <button class="btn btn-sm text-danger text-decoration-none shadow-none p-0 ms-2" 
                         type="button" data-bs-toggle="modal" data-bs-target="#modal" 
-                        value="/category/${data[2]}/delete">
+                        value="popups/category/${data[2]}/delete">
                             <i class="bi-trash" style="font-size: 18px;"></i>
                         </button>`
             }
@@ -70,7 +70,7 @@ $(document).ready(function () {
             render: function (data, type, row, meta) {
                 return `<button class="btn btn-sm text-danger text-decoration-none shadow-none p-0" type="button" 
                         data-bs-toggle="modal" data-bs-target="#modal" 
-                        value="/favorite/${data[2]}/remove">
+                        value="popups/favorite/${data[2]}/remove">
                             <i class="bi-bookmark-star" style="font-size: 18px;"></i>
                         </button>`
             }
@@ -96,6 +96,43 @@ $(document).ready(function () {
         favoritesTable.search($(this).val()).draw();
     });
 
+    let sharesTable = $('#sharesTable').DataTable({
+        lengthChange: true,
+        lengthMenu: [[25, 50, 100, -1], [25, 50, 100, 'All']],
+        order: [[0, 'asc']],
+        searching: true,
+        info: false,
+        sDom: 'tpl',
+        oLanguage: {sLengthMenu: '_MENU_'},
+        processing: true,
+        serverSide: true,
+        deferLoading: false,
+        ajax: '../shares_table',
+        columnDefs: [{
+            targets: 1,
+            data: null,
+            render: function (data, type, row, meta) {
+                return `<button class="btn btn-sm text-danger text-decoration-none shadow-none p-0" type="button" 
+                        data-bs-toggle="modal" data-bs-target="#modal" 
+                        value="#" disabled>
+                            <i class="bi-trash" style="font-size: 18px;"></i>
+                        </button>`
+            }
+        }],
+        initComplete: (settings, json) => {
+            $('#sharesTable_length').appendTo('#sharesTableLengthArea');
+            $('#sharesTable_paginate').addClass('btn-sm p-0').appendTo('#sharesTablePaginationArea');
+            $('#sharesTablePaginationArea .pagination').addClass('mb-0');
+        }
+
+    }).on('draw.dt', function () {
+        $('#sharesTablePaginationArea .pagination').addClass('mb-0');
+    });
+
+    $('#sharesTableSearch').keyup(function () {
+        sharesTable.search($(this).val()).draw();
+    })
+
     function categoriesFavoritesTablesUpdate() {
         categoriesTable.draw();
         favoritesTable.draw();
@@ -103,6 +140,8 @@ $(document).ready(function () {
 
     $(function () {
         categoriesFavoritesTablesUpdate();
+
+        sharesTable.draw();
     });
 
     $('#modal').on('post.success', function () {

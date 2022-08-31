@@ -1,3 +1,29 @@
+<script type="text/javascript">
+    $(document).ready(function () {
+        // tables
+        let sharesTable = $('#sharesTable').DataTable({
+            pageLength: 10,
+            lengthChange: false,
+            order: [[1, 'desc'], [0, 'desc']],
+            searching: true,
+            info: false,
+            sDom: 'tpl',
+            serverSide: false,
+            initComplete: (settings, json) => {
+                $('#sharesTable_paginate').addClass('btn-sm p-0').appendTo('#sharesTablePaginationArea');
+                $('#sharesTablePaginationArea .pagination').addClass('mb-0');
+            }
+
+        }).on('draw.dt', function () {
+            $('#sharesTablePaginationArea .pagination').addClass('mb-0');
+        });
+
+        $('#sharesTableSearch').keyup(function () {
+            sharesTable.search($(this).val()).draw();
+        });
+    })
+</script>
+
 <div class="card shadow-lg">
     <div class="card-header">
         <div class="row justify-content-between">
@@ -5,16 +31,65 @@
                 <h3>Delete expense</h3>
             </div>
             <div class="col-2 text-end">
-                <button type="button" class="btn-close p-2" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button class="btn-close p-2" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
         </div>
     </div>
     <form class="needs-validation" method="post" novalidate>
         {{ form.hidden_tag() }}
         <div class="card-body">
-            <p>
-                Delete expense <strong>{{ object.description }}</strong> from {{ object.timestamp | formatdatetime }}?
-            </p>
+            <div class="row">
+                <div class="col-12">
+                     <p>
+                        Delete expense <strong style="color: {{ object.category.color }}">{{ object.description }}</strong> from {{ object.timestamp | formatdatetime }}?
+                    </p>
+                </div>
+            </div>
+            {% if form.shares %}
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card bg-light mt-3">
+                            <div class="card-header py-1">
+                                <div class="row">
+                                    <div class="col-6 d-flex align-items-center">
+                                        <strong class="text-danger m-0">Will also delete the following shares:</strong>
+                                    </div>
+                                    <div class="col-6 d-flex align-items-start justify-content-end">
+                                        <label for="sharesTableSearch"></label>
+                                        <input id="sharesTableSearch" class="form-control form-control-sm table-search-input" type="text" placeholder="Search">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body py-1">
+                                <table id="sharesTable" class="table table-sm align-middle w-100">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">User</th>
+                                            <th scope="col">Value</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for share in form.shares %}
+                                            <tr>
+                                                <td>
+                                                    {{ share.object_data.user.username }}
+                                                    <input id="{{ share.user.id }}" name="{{ share.user.name }}" type="hidden" value="{{ share.user.data }}">
+                                                </td>
+                                                <td>
+                                                    {{ share.value.data }}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="card-footer py-1">
+                                <div id="sharesTablePaginationArea" class="d-flex justify-content-end"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
         </div>
         <div class="card-footer">
             {{ form.submit(class="btn btn-danger") }}

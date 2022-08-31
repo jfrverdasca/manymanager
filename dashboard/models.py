@@ -84,6 +84,12 @@ class User(UserMixin, db.Model):
             .dumps({'id': self.id})\
             .decode('utf-8')
 
+    def get_share_with_token(self):
+        return TimedJSONWebSignatureSerializer(current_app.config['SECRET_KEY'],
+                                               current_app.config['SHARE_TOKEN_EXPIRATION_SECONDS'])\
+            .dumps({'shared_by': self.id})\
+            .decode('utf-8')
+
     @staticmethod
     def check_password_reset_token(token):
         try:
@@ -93,6 +99,20 @@ class User(UserMixin, db.Model):
             return None
 
         return User.query.filter_by(id=user_id, active=True).first()
+
+    @staticmethod
+    def check_share_with_token(token):
+        try:
+            share_with_id = \
+                TimedJSONWebSignatureSerializer(current_app.config['SECRET_KEY']).loads(token)['shared_by']
+
+        except (SignatureExpired, BadSignature, KeyError):
+            return None
+
+        return User.query.filter_by(id=share_with_id, active=True).first()
+
+    def __str__(self):
+        return str(self.id)
 
 
 class Category(db.Model):
@@ -130,9 +150,12 @@ class Expense(db.Model):
     category_id = db.Column(db.BigInteger, db.ForeignKey('category.id'))
     category = db.relationship('Category', back_populates='expenses')  # reverse many-to-one
 
+    # alerts one-to-many relationship
+    alerts = db.relationship('Alert', back_populates='expense')
+
     # self one-to-one relationship
     parent_id = db.Column(db.BigInteger, db.ForeignKey('expense.id'), nullable=True)
-    children = db.relationship('Expense')
+    children = db.relationship('Expense', cascade='all, delete')
 
     @validates(is_favorite)
     def validate_is_favorite(self, key, is_favorite):
@@ -176,8 +199,24 @@ class Expense(db.Model):
                        category_id=self.category_id,
                        parent_id=self.parent_id)
 
-    def get_child_expenses(self):
-        return Expense.query.filter(Expense.parent_id == self.id)
+    def get_child_expenses(self, shared_with_user=None):
+        if shared_with_user:
+            if isinstance(shared_with_user, User):
+                shared_with_user = shared_with_user.id
+
+            return Expense.query.filter_by(user_id=shared_with_user, parent_id=self.id).all()
+
+        return Expense.query.filter_by(parent_id=self.id).all()
+
+    def create_shared_expense(self, share_with_user, value):
+        if isinstance(share_with_user, User):
+            share_with_user = share_with_user.id
+
+        return Expense(description=self.description,
+                       timestamp=self.timestamp,
+                       value=value,
+                       user_id=share_with_user,
+                       parent_id=self.id)
 
 
 class Alert(db.Model):
@@ -185,8 +224,25 @@ class Alert(db.Model):
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     title = db.Column(db.String(50), nullable=True)
     description = db.Column(db.String(5000))
+    timestamp = db.Column(db.DateTime, default=datetime.now)
     seen = db.Column(db.Boolean, default=False)
 
     # user one-to-many relationship
     user_id = db.Column(db.BigInteger, db.ForeignKey('user.id'))
     user = db.relationship('User', back_populates='alerts')
+
+    # expense one-to-one relationship
+    expense_id = db.Column(db.BigInteger, db.ForeignKey('expense.id'))
+    expense = db.relationship('Expense', back_populates='alerts')  # reverse many-to-one
+
+    @staticmethod
+    def create_shared_expense_alert(shared_by_user, shared_expense):
+        if not shared_by_user or not shared_expense:
+            return None
+
+        return Alert(user_id=shared_expense.user_id,
+                     title=f'User {shared_by_user.username} has shared an expense.',
+                     description=f'User {shared_by_user.username} has shared the expense '
+                                 f'\"{shared_expense.description}\", in the amount of {shared_expense.value}. '
+                                 f'Please define the category to add it to your expenses.',
+                     expense=shared_expense)

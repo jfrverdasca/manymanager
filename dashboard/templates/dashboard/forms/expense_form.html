@@ -1,5 +1,28 @@
 <script type="text/javascript">
     $(document).ready(function () {
+        // tables
+        let sharesTable = $('#sharesTable').DataTable({
+            pageLength: 10,
+            lengthChange: false,
+            order: [[1, 'asc'], [0, 'desc']],
+            searching: true,
+            info: false,
+            sDom: 'tpl',
+            serverSide: false,
+            initComplete: (settings, json) => {
+                $('#sharesTable_paginate').addClass('btn-sm p-0').appendTo('#sharesTablePaginationArea');
+                $('#sharesTablePaginationArea .pagination').addClass('mb-0');
+            }
+        
+        }).on('draw.dt', function () {
+            $('#sharesTablePaginationArea .pagination').addClass('mb-0');
+        });
+
+        $('#sharesTableSearch').keyup(function () {
+            sharesTable.search($(this).val()).draw();
+        });
+
+        // others
         let datepickerPositionUpdateInterval = null;
         $('#date').datepicker({
             dateFormat: 'dd-mm-yy',
@@ -19,6 +42,13 @@
                     clearInterval(datepickerPositionUpdateInterval);
             }
         });
+
+        $(function () {
+            new bootstrap.Popover($('#valueDisabledPopover'));
+
+            // show collapse panel if it has any invalid-feedback inside
+            $('.collapse').has('.invalid-feedback').collapse('show');
+        });
     })
 </script>
 
@@ -29,7 +59,7 @@
                 <h3>Create expense</h3>
             </div>
             <div class="col-2 text-end">
-                <button type="button" class="btn-close p-2" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button class="btn-close p-2" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
         </div>
     </div>
@@ -118,18 +148,32 @@
                 <div class="col-3">
                     {{ form.value.label }}:
                 </div>
-                <div class="col-6">
-                    {% if form.value.errors %}
-                        {{ form.value(class="form-control is-invalid", type="number") }}
-                        <div class="invalid-feedback">
-                            {% for error in form.value.errors %}
-                                <small>{{ error }}</small>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        {{ form.value(class="form-control", type="number") }}
-                    {% endif %}
-                </div>
+                {% if form.has_parent.data %}
+                    <div class="col-6">
+                        {{ form.value(class="form-control", type="number", readonly=true) }}
+                    </div>
+                    <div class="col-1">
+                        <a id="valueDisabledPopover" tabindex="0" class="text-primary" role="button" data-bs-toggle="popover" data-bs-trigger="focus" title="Value change disabled" data-bs-content="It is not possible to change the value of an expense shared with you">
+                            <i class="bi bi-info-circle"></i>
+                        </a>
+                        <!--<span class="text-primary">
+                            <i class="bi bi-info-circle"></i>
+                        </span>-->
+                    </div>
+                {% else %}
+                    <div class="col-6">
+                        {% if form.value.errors %}
+                            {{ form.value(class="form-control is-invalid", type="number") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.value.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.value(class="form-control", type="number") }}
+                        {% endif %}
+                    </div>
+                {% endif %}
             </div>
             <div class="row justify-content-start align-items-center mt-2">
                 <div class="col-3">
@@ -139,6 +183,65 @@
                     {{ form.is_favorite(class="form-check-input") }}
                 </div>
             </div>
+            <!-- shares -->
+            <div class="row align-items-center mt-3">
+                <div class="col-12 d-flex justify-content-start">
+                    <small>
+                        <a class="link-primary" data-bs-toggle="collapse" href="#sharesCollapse" role="button" aria-expanded="false" aria-controls="sharesCollapse">Share expense</a>
+                    </small>
+                </div>
+            </div>
+            <div id="sharesCollapse" class="collapse">
+                <div class="card bg-light mt-3">
+                    <div class="card-header py-1">
+                        <div class="row">
+                            <div class="col-6 d-flex align-items-center">
+                                <h5 class="m-0">Share with...</h5>
+                            </div>
+                            <div class="col-6 d-flex align-items-start justify-content-end">
+                                <label for="sharesTableSearch"></label>
+                                <input id="sharesTableSearch" class="form-control form-control-sm table-search-input" type="text" placeholder="Search">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body py-1">
+                        <table id="sharesTable" class="table table-sm align-middle w-100">
+                            <thead>
+                                <tr>
+                                    <th scope="col">User</th>
+                                    <th scope="col">Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for share in form.shares %}
+                                    <tr>
+                                        <td>
+                                            {{ share.object_data.user.username }}
+                                            <input id="{{ share.user.id }}" name="{{ share.user.name }}" type="hidden" value="{{ share.user.data }}">
+                                        </td>
+                                        <td data-order="{{ share.value.data }}">
+                                            {% if share.value.errors %}
+                                                {{ share.value(class="form-control is-invalid", type="number") }}
+                                                <div class="invalid-feedback">
+                                                    {% for error in share.value.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% else %}
+                                                {{ share.value(class="form-control form-control-sm", type="number") }}
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card-footer py-1">
+                        <div id="sharesTablePaginationArea" class="d-flex justify-content-end"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- shares -->
         </div>
         <div class="card-footer">
             {{ form.submit(class="btn btn-primary") }}

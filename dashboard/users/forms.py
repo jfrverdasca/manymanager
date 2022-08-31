@@ -4,6 +4,7 @@ from dashboard.models import User
 
 
 class RegisterForm(FlaskForm):
+
     email = StringField('Email', validators=[validators.DataRequired(), validators.Email()])
     username = StringField('Username', validators=[validators.DataRequired(), validators.Length(min=5, max=15)])
     password = PasswordField('Password', validators=[validators.DataRequired()])

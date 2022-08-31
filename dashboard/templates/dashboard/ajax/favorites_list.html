@@ -1,17 +1,22 @@
-<ul id="favoritesList">
-    {% for row in favorites %}
-        <li style="color: #fff; background: {{ row.category.color }}" class="btn m-1" value="{{ row.id }}">
-            <div class="d-flex justify-content-center text-nowrap">
-                <strong>{{ row.description }}</strong>
-            </div>
-            <div class="d-block">
-                <small>{{ row.category.name }}</small>
-            </div>
-            <div class="d-block">
-                <small>
-                    <b>{{ row.value }}</b>
-                </small>
-            </div>
-        </li>
-    {% endfor %}
-</ul>
+{% if favorites %}
+    <ul id="favoritesList">
+        {% for row in favorites %}
+            <li style="color: #fff; background: {{ row.category.color }}" class="btn m-1" value="{{ row.id }}">
+                <div class="d-flex justify-content-center text-nowrap">
+                    <strong>{{ row.description }}</strong>
+                </div>
+                <div class="d-block">
+                    <small>{{ row.category.name }}</small>
+                </div>
+                <div class="d-block">
+                    <small>
+                        <b>{{ row.value }}</b>
+                    </small>
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p class="mb-0">Add items to favorites to add expenses with one click. Select the <b>Favorite</b> option when adding a new expense</p>
+    <small>Note: Add items whose price is not variable</small>
+{% endif %}

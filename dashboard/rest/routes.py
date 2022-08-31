@@ -1,6 +1,6 @@
 import dashboard.rest.datatables as datatables
 
-from flask import Blueprint, current_app
+from flask import Blueprint, current_app, Response
 from flask_login import current_user
 from flask_restful import Resource, reqparse, marshal_with, fields, abort
 from sqlalchemy.sql import func, desc
@@ -8,7 +8,7 @@ from dateutil.relativedelta import relativedelta
 from datetime import datetime
 from calendar import month_name
 from dashboard import api
-from dashboard.models import db, User, Category, Expense, Share
+from dashboard.models import db, Category, Expense, Share, Alert
 from dashboard.utilities import get_expenses_by_date_interval_category
 
 api_blueprint = Blueprint('api', __name__)
@@ -24,6 +24,7 @@ expense_fields = {
 }
 
 
+# tables
 class ExpensesTable(Resource, datatables.DatatableHandler):
 
     # keep these variables with the same values as in Datatables javascript code
@@ -32,12 +33,17 @@ class ExpensesTable(Resource, datatables.DatatableHandler):
         1: (Category.name, str),
         2: (Expense.timestamp, datetime),  # default order column
         3: (Expense.value, float),
-        4: ('Options', None)}
+        4: ('Options', None),
+        5: ('Shared', bool)}
 
     @datatables.datatable_parser()
     def get(self, from_date: datetime, to_date: datetime, category_id: int):
         if not current_user.is_authenticated:
             abort(401, message='Authentication required')
+
+        # add hour information to date
+        from_date = from_date.replace(hour=0, minute=0, second=0)
+        to_date = to_date.replace(hour=23, minute=59, second=59)
 
         # get records from database
         expense_records = get_expenses_by_date_interval_category(current_user, from_date, to_date, category_id)
@@ -52,7 +58,8 @@ class ExpensesTable(Resource, datatables.DatatableHandler):
                                       'color': item.category.color},
                          'timestamp': item.timestamp.strftime(current_app.config.get('DATETIME_FORMAT')),
                          'value': item.value,
-                         'id': item.id})
+                         'id': item.id,
+                         'shared': True if item.parent_id or item.children else False})
 
         return {'draw': self.datatable.draw,
                 'recordsTotal': total_items,
@@ -210,12 +217,12 @@ class SettingsFavoritesTable(Resource, datatables.DatatableHandler):
 api.add_resource(SettingsFavoritesTable, '/favorites_table/')
 
 
-class ShareUserTable(Resource, datatables.DatatableHandler):
+class SettingsSharesTable(Resource, datatables.DatatableHandler):
 
     # keep these variables with the same values as in Datatables javascript code
     COLUMNS_INDEX = {
-        0: (Share.left_id, str),
-        1: ('Value', float)
+        0: (Share.shared_with, str),
+        1: ('Options', None)
     }
 
     @datatables.datatable_parser()
@@ -224,15 +231,14 @@ class ShareUserTable(Resource, datatables.DatatableHandler):
             abort(401, message='Authentication required')
 
         # get records from database
-        share_records = Share.query.filter(Share.left_user_id == current_user.id)
+        share_records = Share.query.filter(Share.shared_by == current_user)
 
         # process datatables items
         items, total_items = self.handle_datatable_request(share_records, self.COLUMNS_INDEX)
 
         rows = list()
         for item in items:
-            rows.append([{'id': item.sharing.id,
-                          'name': item.sharing.username}])
+            rows.append([item.shared_with.username])
 
         return {'draw': self.datatable.draw,
                 'recordsTotal': total_items,
@@ -240,7 +246,7 @@ class ShareUserTable(Resource, datatables.DatatableHandler):
                 'data': rows}
 
 
-api.add_resource(ShareUserTable, '/share_table/')
+api.add_resource(SettingsSharesTable, '/shares_table/')
 
 
 # charts
@@ -314,6 +320,26 @@ class QuickHistoryChart(Resource):
 
 
 api.add_resource(QuickHistoryChart, '/quick-history-chart/<int:months>')
+
+
+# alerts
+class SeenAlert(Resource):
+
+    def post(self, alert_id):
+        if not current_user.is_authenticated:
+            abort(401, message='Authentication required')
+
+        alert = Alert.query.filter_by(id=alert_id, user=current_user, seen=False).first()
+        if not alert:
+            abort(404, message=f'Alert with id {alert_id} not found')
+
+        alert.seen = True
+        db.session.commit()
+
+        return Response(status=200)
+
+
+api.add_resource(SeenAlert, '/seen-alert/<int:alert_id>')
 
 
 # favorites

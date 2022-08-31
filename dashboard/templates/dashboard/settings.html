@@ -20,52 +20,6 @@
             <a class="btn btn-sm btn-outline-dark" href="{{ url_for('dashboard.home') }}">Back</a>
         </div>
     </div>
-    <div class="row mt-3">
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <div class="row">
-                        <div class="col-4">
-                            <h3>Alerts</h3>
-                        </div>
-                        <div class="col-8 d-flex align-items-start justify-content-end">
-                            <div class="row h-100">
-                                <div class="col-auto">
-                                    <div id="alertsTableLengthArea"></div>
-                                </div>
-                                <div class="col-auto">
-                                    <label for="alertsTableSearch" hidden></label>
-                                    <input id="alertsTableSearch" class="form-control form-control-sm table-search-input" type="text" placeholder="Search">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div id="alertsTableArea" class="table-responsive-md">
-                        <div class="d-flex align-items-center">
-                            <div class="d-inline">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                            </div>
-                            <h5 class="d-inline ms-3 mb-0">Loading...</h5>
-                        </div>
-                    </div>
-                </div>
-                <div style="min-height: 52px;" class="card-footer">
-                    <div class="row justify-content-between">
-                        <div class="col-2">
-                            <button class="btn btn-sm btn-primary mt-1" type="button" data-bs-toggle="modal" data-bs-target="#modal" value="None">New</button>
-                        </div>
-                        <div class="col-4">
-                            <div id="alertsTablePaginationArea" class="d-flex justify-content-end"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
     <div class="row">
         <div class="col-md-6 mt-3">
             <div class="card shadow-sm h-100">
@@ -96,7 +50,7 @@
                 <div style="min-height: 52px;" class="card-footer">
                     <div class="row justify-content-between">
                         <div class="col-2">
-                            <button class="btn btn-sm btn-primary mt-1" type="button" data-bs-toggle="modal" data-bs-target="#modal" value="{{ url_for('dashboard.category_create_form') }}">New</button>
+                            <button class="btn btn-sm btn-primary mt-1" type="button" data-bs-toggle="modal" data-bs-target="#modal" value="{{ url_for('popup.category_create_form') }}">New</button>
                         </div>
                         <div class="col-4">
                             <div id="categoriesTablePaginationArea" class="d-flex justify-content-end"></div>
@@ -146,24 +100,40 @@
         <div class="col-12">
             <div class="card shadow-sm">
                 <div class="card-header">
-                    <h3>Shares</h3>
+                    <div class="row">
+                        <div class="col-4">
+                            <h3>Shares</h3>
+                        </div>
+                        <div class="col-8 d-flex align-items-start justify-content-end">
+                            <div class="row h-100">
+                                <div class="col-auto">
+                                    <div id="sharesTableLengthArea"></div>
+                                </div>
+                                <div class="col-auto">
+                                    <label for="sharesTableSearch" hidden></label>
+                                    <input id="sharesTableSearch" class="form-control form-control-sm table-search-input" type="text" placeholder="Search">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
                 <div class="card-body">
                     <div id="sharesTableArea" class="table-responsive-md">
-                        <div class="d-flex align-items-center">
-                            <div class="d-inline">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                            </div>
-                            <h5 class="d-inline ms-3 mb-0">Loading...</h5>
-                        </div>
+                        <table id="sharesTable" class="table align-middle w-100">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Users</th>
+                                    <th scope="col">Options</th>
+                                </tr>
+                            </thead>
+                        </table>
                     </div>
                 </div>
                 <div style="min-height: 52px;" class="card-footer">
                     <div class="row justify-content-between">
                         <div class="col-2">
-                            <button class="btn btn-sm btn-primary mt-1" type="button" data-bs-toggle="modal" data-bs-target="#modal" value="">New</button>
+                            <button class="btn btn-sm btn-primary mt-1" type="button" data-bs-toggle="modal" data-bs-target="#modal" value="{{ url_for('popup.share_request_form') }}">New</button>
                         </div>
                         <div class="col-4">
                             <div id="sharesTablePaginationArea" class="d-flex justify-content-end"></div>
