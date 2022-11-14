@@ -13,7 +13,7 @@ from dashboard.config import Config
 logging.basicConfig(level=logging.DEBUG)
 
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.StreamHandler(sys.stdin))
+logger.addHandler(logging.StreamHandler(sys.stdout))
 
 # db
 db = SQLAlchemy()
@@ -51,7 +51,7 @@ def create_app(config_class=Config):
     from dashboard.url_converters import DateConverter
     app.url_map.converters['date'] = DateConverter
 
-    # api/blueprints
+    # blueprints
     from dashboard.rest.routes import api_blueprint
     api.init_app(api_blueprint)
     app.register_blueprint(api_blueprint)
@@ -64,6 +64,9 @@ def create_app(config_class=Config):
 
     from dashboard.popups.routes import popups_blueprint
     app.register_blueprint(popups_blueprint, url_prefix='/popups')
+
+    from dashboard.ajax.routes import ajax_blueprint
+    app.register_blueprint(ajax_blueprint, url_prefix='/ajax')
 
     app.app_context().push()
     db.create_all()

@@ -10,6 +10,7 @@ from calendar import month_name
 from dashboard import api
 from dashboard.models import db, Category, Expense, Share, Alert
 from dashboard.utilities import get_expenses_by_date_interval_category
+from dashboard.decorators import login_required_401
 
 api_blueprint = Blueprint('api', __name__)
 
@@ -36,11 +37,9 @@ class ExpensesTable(Resource, datatables.DatatableHandler):
         4: ('Options', None),
         5: ('Shared', bool)}
 
+    @login_required_401
     @datatables.datatable_parser()
     def get(self, from_date: datetime, to_date: datetime, category_id: int):
-        if not current_user.is_authenticated:
-            abort(401, message='Authentication required')
-
         # add hour information to date
         from_date = from_date.replace(hour=0, minute=0, second=0)
         to_date = to_date.replace(hour=23, minute=59, second=59)
@@ -79,11 +78,9 @@ class CategoriesBalanceTable(Resource, datatables.DatatableHandler):
         2: ('Balance', float),
         3: ('Spent', float)}
 
+    @login_required_401
     @datatables.datatable_parser()
     def get(self, from_date: datetime, to_date: datetime, category_id: int):
-        if not current_user.is_authenticated:
-            abort(401, message='Authentication required')
-
         # add hour information to date
         from_date = from_date.replace(hour=0, minute=0, second=0)
         to_date = to_date.replace(hour=23, minute=59, second=59)
@@ -151,11 +148,9 @@ class SettingsCategoriesTable(Resource, datatables.DatatableHandler):
         1: (Category.limit, float),
         2: ('Options', None)}
 
+    @login_required_401
     @datatables.datatable_parser()
     def get(self):
-        if not current_user.is_authenticated:
-            abort(401, message='Authentication required')
-
         # get records from database
         category_records = Category.query.filter(Category.user == current_user)
 
@@ -187,11 +182,9 @@ class SettingsFavoritesTable(Resource, datatables.DatatableHandler):
         2: ('Options', None),
         3: (Expense.favorite_sort, int)}
 
+    @login_required_401
     @datatables.datatable_parser()
     def get(self):
-        if not current_user.is_authenticated:
-            abort(401, message='Authentication required')
-
         # get records from database
         favorite_records = Expense.query.filter(Expense.user == current_user,
                                                 Expense.is_favorite) \
@@ -225,11 +218,9 @@ class SettingsSharesTable(Resource, datatables.DatatableHandler):
         1: ('Options', None)
     }
 
+    @login_required_401
     @datatables.datatable_parser()
     def get(self):
-        if not current_user.is_authenticated:
-            abort(401, message='Authentication required')
-
         # get records from database
         share_records = Share.query.filter(Share.shared_by == current_user)
 
@@ -252,10 +243,8 @@ api.add_resource(SettingsSharesTable, '/shares_table/')
 # charts
 class ExpensesCategoriesChart(Resource):
 
+    @login_required_401
     def get(self, from_date, to_date, category_id):
-        if not current_user.is_authenticated:
-            abort(401, message='Authentication required')
-
         from_date = from_date.replace(hour=0, minute=0, second=0)
         to_date = to_date.replace(hour=23, minute=59, second=59)
 
@@ -288,10 +277,8 @@ api.add_resource(ExpensesCategoriesChart, '/spent-by-category-chart/<date:from_d
 
 class QuickHistoryChart(Resource):
 
+    @login_required_401
     def get(self, months):
-        if not current_user.is_authenticated:
-            abort(401, message='Authentication required')
-
         to_date = datetime.now().replace(hour=23, minute=59, second=59)
         from_date = to_date - relativedelta(months=months)
 
@@ -325,10 +312,8 @@ api.add_resource(QuickHistoryChart, '/quick-history-chart/<int:months>')
 # alerts
 class SeenAlert(Resource):
 
+    @login_required_401
     def post(self, alert_id):
-        if not current_user.is_authenticated:
-            abort(401, message='Authentication required')
-
         alert = Alert.query.filter_by(id=alert_id, user=current_user, seen=False).first()
         if not alert:
             abort(404, message=f'Alert with id {alert_id} not found')
@@ -349,11 +334,9 @@ class Favorite(Resource):
     favorite_args.add_argument('is_favorite', type=bool)
     favorite_args.add_argument('sort', type=int)
 
+    @login_required_401
     @marshal_with(expense_fields)
     def patch(self, favorite_id):
-        if not current_user.is_authenticated:
-            abort(401, message='Authentication required')
-
         expense = Expense.query.filter_by(user=current_user, id=favorite_id, is_favorite=True).first()
         if not expense:
             abort(404, message=f'Favorite with id {favorite_id} not found')
@@ -383,11 +366,9 @@ class FavoriteReplica(Resource):
     replica_args = reqparse.RequestParser()
     replica_args.add_argument('id', type=int, required=True, help='id is required')
 
+    @login_required_401
     @marshal_with(expense_fields)
     def post(self):
-        if not current_user.is_authenticated:
-            abort(401, message='Authentication required')
-
         request_args = self.replica_args.parse_args()
         favorite_id = request_args.get('id')
 

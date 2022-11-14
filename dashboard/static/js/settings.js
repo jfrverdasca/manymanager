@@ -57,7 +57,7 @@ $(document).ready(function () {
         processing: true,
         serverSide: true,
         deferLoading: false,
-        ajax: '../favorites_table',
+        ajax: '../favorites_table/',
         columnDefs: [{
             targets: 0,
             data: null,
@@ -107,9 +107,11 @@ $(document).ready(function () {
         processing: true,
         serverSide: true,
         deferLoading: false,
-        ajax: '../shares_table',
+        ajax: '../shares_table/',
         columnDefs: [{
             targets: 1,
+            searchable: false,
+            orderable: false,
             data: null,
             render: function (data, type, row, meta) {
                 return `<button class="btn btn-sm text-danger text-decoration-none shadow-none p-0" type="button" 

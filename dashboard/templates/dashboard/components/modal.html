@@ -1,0 +1,62 @@
+<script type="text/javascript" src="{{ url_for('static', filename='js/modal.js') }}"></script>
+
+<div id="modal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow-lg">
+            <div id="loading" class="container py-5">
+                <div class="row">
+                    <div class="col-12 text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-5">
+                    <div class="col-12 text-center">
+                        <small>Loading content...</small>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 text-center">
+                        <button class="btn btn-sm btn-primary" type="button" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+            <div id="loadingFailed" style="display: none;" class="container py-5">
+                <div class="row mb-3">
+                    <div class="col-12 text-center text-danger">
+                        <h3>Content loading failed</h3>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12  text-center">
+                        Could not load content due to an error. Please try again.
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-12 text-secondary text-center">
+                        <small>If the problem persists please contact the administrator.</small>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-12 text-center">
+                        <small class="d-block">
+                            <b>Error:</b>
+                            <span id="error"></span>
+                        </small>
+                        <small class="d-block">
+                            <b>Status:</b>
+                            <span id="status"></span>
+                        </small>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 text-center">
+                        <button class="btn btn-sm btn-danger" type="button" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+            <div id="modalContentArea" style="display: none;" class="modal-body p-0" ></div>
+        </div>
+    </div>
+</div>

@@ -236,13 +236,35 @@ class Alert(db.Model):
     expense = db.relationship('Expense', back_populates='alerts')  # reverse many-to-one
 
     @staticmethod
-    def create_shared_expense_alert(shared_by_user, shared_expense):
+    def shared_expense_alert(shared_by_user, shared_expense):
         if not shared_by_user or not shared_expense:
             return None
 
         return Alert(user_id=shared_expense.user_id,
                      title=f'User {shared_by_user.username} has shared an expense.',
                      description=f'User {shared_by_user.username} has shared the expense '
-                                 f'\"{shared_expense.description}\", in the amount of {shared_expense.value}. '
+                                 f'\"{shared_expense.description}\", in the value of {shared_expense.value}. '
                                  f'Please define the category to add it to your expenses.',
                      expense=shared_expense)
+
+    @staticmethod
+    def shared_expense_delete_alert(shared_by_user, deleted_shared_expense):
+        if not shared_by_user or not deleted_shared_expense:
+            return None
+
+        return Alert(user_id=deleted_shared_expense.user_id,
+                     title=f'User {shared_by_user.username} has deleted a shared expense.',
+                     description=f'User{shared_by_user.username} has deleted the shared expense '
+                                 f'{deleted_shared_expense.description} from {deleted_shared_expense.timestamp}, '
+                                 f'in the value of {deleted_shared_expense.value}.')
+
+    @staticmethod
+    def shared_expense_update_alert(shared_by_user, shared_expense):
+        if not shared_by_user or not shared_expense:
+            return None
+
+        return Alert(user_id=shared_expense.user_id,
+                     title=f'User {shared_by_user.username} has updated shared expense.',
+                     description=f'User{shared_by_user.username} has updated the shared expense '
+                                 f'{shared_expense.description} from {shared_expense.timestamp}, '
+                                 f'with the new value of {shared_expense.value}.')

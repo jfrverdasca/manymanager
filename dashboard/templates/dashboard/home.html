@@ -4,7 +4,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
     <script type="text/javascript" src="{{ url_for('static', filename='js/dropdown.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/home.js') }}"></script>
-    <script type="text/javascript" src="{{ url_for('static', filename='js/modal.js') }}"></script>
 
     <!-- jquery ui -->
     <link href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet">
@@ -108,7 +107,7 @@
                     </li>
                     {% for category in data.categories %}
                         <li>
-                            <button class="color-dropdown-item" style="--background-color: {{ category.color }}; --color: #fff" type="button" value="{{ category.id }}">{{ category.name }}</button>
+                            <button style="--bg-color: {{ category.color }}; --color: #fff" class="colored-dropdown-item" type="button" value="{{ category.id }}">{{ category.name }}</button>
                         </li>
                     {% endfor %}
                 </ul>
@@ -206,7 +205,9 @@
                                         <th scope="col" class="w-25">Date</th>
                                         <th scope="col">Value</th>
                                         <th scope="col">Options</th>
-                                        <th scope="col">Shared</th>
+                                        <th scope="col">
+                                            <i class="bi-share" style="font-size: 16px;"></i>
+                                        </th>
                                     </tr>
                                 </thead>
                             </table>
@@ -227,30 +228,5 @@
         </div>
     </div>
     <!-- modal -->
-    <div id="modal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content border-0 shadow-lg">
-                <div id="loadingAnimation" class="container py-3">
-                    <div class="row pt-5">
-                        <div class="col-12 text-center">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row pb-5">
-                        <div class="col-12 text-center">
-                            <small>Loading content...</small>
-                        </div>
-                    </div>
-                    <div class="row pt-5">
-                        <div class="col-12 text-center">
-                            <button class="btn btn-sm btn-primary" type="button" data-bs-dismiss="modal">Cancel</button>
-                        </div>
-                    </div>
-                </div>
-                <div id="modalContentArea" style="display: none;" class="modal-body p-0" ></div>
-            </div>
-        </div>
-    </div>
+    {% include 'dashboard/components/modal.html' %}
 {% endblock %}

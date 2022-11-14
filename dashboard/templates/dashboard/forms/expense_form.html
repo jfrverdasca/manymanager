@@ -89,11 +89,11 @@
                 </div>
                 <div class="col-6">
                     <div class="dropdown">
-                        <button id="expense_category_dropdown" class="dropdown-toggle btn btn-primary" type="button" data-bs-toggle="dropdown" aria-expanded="false">Select</button>
-                        <ul class="dropdown-menu" aria-labelledby="expense_category_dropdown">
+                        <button id="expenseCategoryDropdown" class="dropdown-toggle btn btn-primary" type="button" data-bs-toggle="dropdown" aria-expanded="false">Select</button>
+                        <ul class="dropdown-menu" aria-labelledby="expenseCategoryDropdown">
                             {% for choice in form.category.choices %}
                                 <li>
-                                    <button class="color-dropdown-item" style="--background-color: {{ choice.color }}; --color: #fff" type="button" value="{{ choice.id }}">{{ choice.name }}</button>
+                                    <button class="colored-dropdown-item" style="--bg-color: {{ choice.color }}; --color: #fff" type="button" value="{{ choice.id }}">{{ choice.name }}</button>
                                 </li>
                             {% endfor %}
                         </ul>

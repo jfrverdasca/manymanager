@@ -3,19 +3,18 @@ from flask_login import current_user
 from sqlalchemy.sql import and_
 from sqlalchemy.orm import aliased
 from datetime import datetime
-from dashboard.models import db, User, Expense, Category, Share, Alert
 from dashboard.utilities import send_email
+from dashboard.decorators import login_required_401
+from dashboard.models import db, User, Expense, Category, Share, Alert
 from .forms import ExpenseForm, CategoryForm, DeleteForm, ShareRequestForm
 
 popups_blueprint = Blueprint('popup', __name__)
 
 
 # popups
+@login_required_401
 @popups_blueprint.route('/expense/new', methods=['GET', 'POST'])
 def expense_create_form():
-    if not current_user.is_authenticated:
-        abort(401)
-
     shares = Share.query.filter_by(shared_by=current_user)
 
     form = ExpenseForm(shares=shares)
@@ -42,7 +41,7 @@ def expense_create_form():
                 db.session.add(shared_expense)
 
                 # create the shared expense alert
-                db.session.add(Alert.create_shared_expense_alert(current_user, shared_expense))
+                db.session.add(Alert.shared_expense_alert(current_user, shared_expense))
 
                 has_uncommitted_changes = True
 
@@ -50,7 +49,7 @@ def expense_create_form():
                 db.session.commit()
 
         except Exception as e:
-            abort(500, e)
+            return Response(status=500, response=str(e))
 
         else:
             return Response(status=200)  # status 200 and no request data means success (close popup)
@@ -61,11 +60,9 @@ def expense_create_form():
     return render_template('dashboard/forms/expense_form.html', form=form)
 
 
+@login_required_401
 @popups_blueprint.route('/expense/<int:expense_id>/update', methods=['GET', 'POST'])
 def expense_update_form(expense_id):
-    if not current_user.is_authenticated:
-        abort(401)
-
     expense = Expense.query.get_or_404(expense_id)
     if expense.user != current_user:
         abort(401)
@@ -89,7 +86,7 @@ def expense_update_form(expense_id):
 
             # set alert as seen
             if expense.alerts:
-                for unseen_alert in filter(lambda a: a.seen == False, expense.alerts):
+                for unseen_alert in filter(lambda a: not a.seen, expense.alerts):
                     unseen_alert.seen = True
 
             # only allow to change the value of an expense if not shared by other user
@@ -110,15 +107,25 @@ def expense_update_form(expense_id):
                         continue
 
                     # used added a new share to the expense
-                    db.session.add(expense.create_shared_expense(share.user.data, share_value))
+                    shared_expense = expense.create_shared_expense(share.user.data, share.value.data)
+                    db.session.add(shared_expense)
+
+                    # create the shared expense alert
+                    db.session.add(Alert.shared_expense_alert(current_user, shared_expense))
 
                 # user removed a shared expense
                 elif share_value in [None, 0]:
                     db.session.delete(shared_expense)
 
+                    # create the shared expense delete alert
+                    db.session.add(Alert.shared_expense_delete_alert(current_user, shared_expense))
+
                 # user changed the value of a shared expense
                 elif share_value != shared_expense.value:
                     shared_expense.value = share_value
+
+                    # create the shared expense update alert
+                    db.session.add(Alert.shared_expense_update_alert(current_user, shared_expense))
 
                 else:
                     continue  # avoid changing the value of the flag has_uncommitted_changes
@@ -129,7 +136,7 @@ def expense_update_form(expense_id):
                 db.session.commit()
 
         except Exception as e:
-            abort(500, e)
+            return Response(status=500, response=str(e))
 
         else:
             return Response(status=200)  # status 200 and no request data means success (close popup)
@@ -140,11 +147,9 @@ def expense_update_form(expense_id):
     return render_template('dashboard/forms/expense_form.html', form=form)
 
 
+@login_required_401
 @popups_blueprint.route('/expense/<int:expense_id>/delete', methods=['GET', 'POST'])
 def expense_delete_form(expense_id):
-    if not current_user.is_authenticated:
-        abort(401)
-
     expense = Expense.query.get_or_404(expense_id)
     if expense.user != current_user:
         abort(401)
@@ -155,11 +160,13 @@ def expense_delete_form(expense_id):
     form = DeleteForm(shares=shares)
     if form.validate_on_submit():
         try:
+            # TODO: change delete method and generate alerts
+
             db.session.delete(expense)  # cascade will delete shared expenses also
             db.session.commit()
 
         except Exception as e:
-            abort(500, e)
+            return Response(status=500, response=str(e))
 
         else:
             return Response(status=200)  # status 200 and no request data means success (close popup)
@@ -167,11 +174,9 @@ def expense_delete_form(expense_id):
     return render_template('dashboard/forms/expense_delete_form.html', form=form, object=expense)
 
 
+@login_required_401
 @popups_blueprint.route('/category/new', methods=['GET', 'POST'])
 def category_create_form():
-    if not current_user.is_authenticated:
-        abort(401)
-
     form = CategoryForm()
     if form.validate_on_submit():
         try:
@@ -184,7 +189,7 @@ def category_create_form():
             db.session.commit()
 
         except Exception as e:
-            abort(500, e)
+            return Response(status=500, response=str(e))
 
         else:
             return Response(status=200)  # status 200 and no request data means success (close popup)
@@ -192,11 +197,9 @@ def category_create_form():
     return render_template('dashboard/forms/category_form.html', form=form)
 
 
+@login_required_401
 @popups_blueprint.route('/category/<int:category_id>/update', methods=['GET', 'POST'])
 def category_update_form(category_id):
-    if not current_user.is_authenticated:
-        abort(401)
-
     category = Category.query.get_or_404(category_id)
     if category.user != current_user:
         abort(401)
@@ -211,7 +214,7 @@ def category_update_form(category_id):
             db.session.commit()
 
         except Exception as e:
-            abort(500, e)
+            return Response(status=500, response=str(e))
 
         else:
             return Response(status=200)  # status 200 and no request data means success (close popup)
@@ -219,11 +222,9 @@ def category_update_form(category_id):
     return render_template('dashboard/forms/category_form.html', form=form)
 
 
+@login_required_401
 @popups_blueprint.route('/category/<int:category_id>/delete', methods=['GET', 'POST'])
 def category_delete_form(category_id):
-    if not current_user.is_authenticated:
-        abort(401)
-
     category = Category.query.get_or_404(category_id)
     if category.user != current_user:
         abort(401)
@@ -235,7 +236,7 @@ def category_delete_form(category_id):
             db.session.commit()
 
         except Exception as e:
-            abort(500, e)
+            return Response(status=500, response=str(e))
 
         else:
             return Response(status=200)  # status 200 and no request data means success (close popup)
@@ -243,11 +244,9 @@ def category_delete_form(category_id):
     return render_template('dashboard/forms/category_delete_form.html', form=form, object=category)
 
 
+@login_required_401
 @popups_blueprint.route('/favorite/<int:expense_id>/remove', methods=['GET', 'POST'])
 def favorite_remove_form(expense_id):
-    if not current_user.is_authenticated:
-        abort(401)
-
     expense = Expense.query.get_or_404(expense_id)
     if expense.user != current_user:
         abort(401)
@@ -268,11 +267,9 @@ def favorite_remove_form(expense_id):
     return render_template('dashboard/forms/favorite_remove_form.html', form=form, object=expense)
 
 
+@login_required_401
 @popups_blueprint.route('/share_request_form', methods=['GET', 'POST'])
 def share_request_form():
-    if not current_user.is_authenticated:
-        abort(401)
-
     form = ShareRequestForm()
     if form.validate_on_submit():
         try:

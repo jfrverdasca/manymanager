@@ -216,14 +216,14 @@ $(document).ready(function () {
         $('#toDate').datepicker('setDate', `${lastMonthDay}-${monthNumber}-${year}`);
 
         let dropdown = $('#categoryDropdown');
-        dropdownStateUpdate(dropdown, $(`.color-dropdown-item:contains(${category}):first`));
+        dropdownUpdate(dropdown, $(`.colored-dropdown-item:contains(${category}):first`));
 
         expensesCategoryBalanceTablesUpdate();
         spentByCategoryChartUpdate();
     }
 
     function alertsListUpdate() {
-        $.get('/alerts-list', function (response) {
+        $.get('/ajax/alerts-list', function (response) {
             $('#alertsListArea').html(response);
 
             let alertsHeight = 0
@@ -239,7 +239,7 @@ $(document).ready(function () {
     }
 
     function favoritesListUpdate() {
-        $.get('/favorites-list', function (response) {
+        $.get('/ajax/favorites-list', function (response) {
             $('#favoritesListArea').html(response);
 
             $('#favoritesList').sortable().disableSelection().on('sortupdate', function (e, ui) {
@@ -300,7 +300,7 @@ $(document).ready(function () {
 
     $(document).on('hide.bs.dropdown', '.dropdown:not(header .dropdown)', function (e) {
         let target = $(e.clickEvent.target, this);
-        dropdownStateUpdate(this, target);
+        dropdownUpdate(this, target);
 
         switch ($(this).attr('id')) {
             case 'quickHistoryChartDropdown':
@@ -343,7 +343,7 @@ $(document).ready(function () {
     $('#modalContentArea').change(function () {
         let categoryId= $('input[name="category"]', this).val();
         if (categoryId !== '0')
-            dropdownStateUpdate($('.dropdown', this), $(`.color-dropdown-item[value="${categoryId}"]`, this));
+            dropdownUpdate($('.dropdown', this), $(`.colored-dropdown-item[value="${categoryId}"]`, this));
     });
 
     $('#modal').on('post.success', function () {

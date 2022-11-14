@@ -1,34 +1,10 @@
-from flask import Blueprint, render_template, abort
+from flask import Blueprint, render_template
 from flask_login import login_required, current_user
 from datetime import datetime
 from calendar import monthrange
-from dashboard.models import Expense, Category, Alert
+from dashboard.models import Category
 
 dashboard_blueprint = Blueprint('dashboard', __name__)
-
-
-# TODO: test shared expenses marked as favorite
-
-# ajax
-@dashboard_blueprint.route('/favorites-list', methods=['GET'])
-def favorites_list():
-    if not current_user.is_authenticated:
-        abort(401)
-
-    return render_template('dashboard/ajax/favorites_list.html',
-                           favorites=Expense.query.filter_by(user=current_user, is_favorite=True)
-                           .join(Category, Expense.category_id == Category.id)
-                           .order_by(Expense.favorite_sort)
-                           .all())
-
-
-@dashboard_blueprint.route('/alerts-list', methods=['GET'])
-def alerts_list():
-    if not current_user.is_authenticated:
-        abort(401)
-
-    return render_template('dashboard/ajax/alerts_list.html',
-                           alerts=Alert.query.filter_by(user=current_user, seen=False).all())
 
 
 # pages
